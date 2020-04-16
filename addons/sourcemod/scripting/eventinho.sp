@@ -13,7 +13,7 @@
 
 #include <eventinho/globals_core.sp>
 
-#include <eventinho/helpers>
+#include <eventinho/helpers.sp>
 
 #include <eventinho/forwards_core.sp>
 #include <eventinho/commands_core.sp>
