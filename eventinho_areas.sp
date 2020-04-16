@@ -11,6 +11,15 @@
 #include <eventinho>
 #include <eventinho/helpers>
 
+public Plugin myinfo =
+{
+	name = "eventinho_areas",
+	author = "Arthurdead",
+	description = "",
+	version = "$$GIT_COMMIT$$",
+	url = ""
+};
+
 #define CHAT_PREFIX "{dodgerblue}[Evento]{default} "
 
 KeyValues kvEventinhoAreas = null;

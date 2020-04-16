@@ -14,6 +14,15 @@ Handle hEquipWearable = null;
 ArrayList hPlayerItems[MAXPLAYERS+1] = {null, ...};
 ArrayList hPlayerRewards[MAXPLAYERS+1] = {null, ...};
 
+public Plugin myinfo =
+{
+	name = "eventinho_hats",
+	author = "Arthurdead",
+	description = "",
+	version = "$$GIT_COMMIT$$",
+	url = ""
+};
+
 public void OnPluginStart()
 {
 	GameData hGameConf = new GameData("classmodel");
