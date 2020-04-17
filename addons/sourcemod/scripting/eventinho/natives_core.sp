@@ -37,7 +37,7 @@ stock void ChatAndHUDAll(const char[] format, any ...)
 
 	SetHudTextParams(-1.0, 0.2, 5.0, 30, 144, 255, 255, 1, 0.5, 0.5, 0.5);
 
-	for(int i = 1; i < MaxClients; i++) {
+	for(int i = 1; i <= MaxClients; i++) {
 		if(IsClientInGame(i)) {
 			ShowHudText(i, -1, buffer2);
 			CPrintToChat(i, buffer);
