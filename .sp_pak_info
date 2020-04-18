@@ -1,6 +1,6 @@
 {
 	"depends": [
 		"SVB-Teammanager",
-		"https://www.doctormckay.com/download/scripting/include/morecolors.inc"
+		"morecolors"
 	]
 }
