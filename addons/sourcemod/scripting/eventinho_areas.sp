@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "eventinho_areas",
 	author = "Arthurdead",
 	description = "",
-	version = "$$GIT_COMMIT$$",
+	version = "",
 	url = ""
 };
 

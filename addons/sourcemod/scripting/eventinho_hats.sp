@@ -19,7 +19,7 @@ public Plugin myinfo =
 	name = "eventinho_hats",
 	author = "Arthurdead",
 	description = "",
-	version = "$$GIT_COMMIT$$",
+	version = "",
 	url = ""
 };
 

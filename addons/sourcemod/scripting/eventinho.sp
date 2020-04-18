@@ -33,7 +33,7 @@ public Plugin myinfo =
 	name = "eventinho",
 	author = "Arthurdead/Mathx",
 	description = "Plugin para ajudar staff nos eventos.",
-	version = "$$GIT_COMMIT$$",
+	version = "",
 	url = ""
 };
 
