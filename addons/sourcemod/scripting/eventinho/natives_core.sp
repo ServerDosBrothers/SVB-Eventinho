@@ -336,7 +336,7 @@ stock Action Timer_EndEvent(Handle timer, any data)
 }
 
 //tira isso dps
-#include <stocksoup-master/tf/tempents_stocks.inc>
+#include <stocksoup/tf/tempents_stocks.inc>
 
 stock void __Internal_EndEvent(Evento event, ArrayList winners)
 {

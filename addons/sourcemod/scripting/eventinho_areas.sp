@@ -9,7 +9,7 @@
 #pragma newdecls required
 
 #include <eventinho>
-#include <eventinho/helpers>
+#include <eventinho/helpers.sp>
 
 public Plugin myinfo =
 {

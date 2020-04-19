@@ -1,6 +1,9 @@
 {
 	"depends": [
 		"SVB-Teammanager",
-		"morecolors"
+		"morecolors",
+		"sm-ripext",
+		"stocksoup",
+		"TF2Items"
 	]
 }
