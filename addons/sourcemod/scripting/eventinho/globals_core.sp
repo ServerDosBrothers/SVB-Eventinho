@@ -31,6 +31,29 @@ stock void Core_Init()
 
 	AddMultiTargetFilter("@evento", FilterEvento, "Todos participando do evento.", false);
 	AddMultiTargetFilter("@!evento", FilterEvento, "Todos não paticipando do evento.", false);
+
+	static const char teams[][3] = {
+		"red",
+		"blu"
+	};
+
+	for(int i = 0; i < sizeof(teams); i++) {
+		int len = 3+8;
+		char[] name = new char[len];
+		Format(name, len, "@%sevento", teams[i]);
+		AddMultiTargetFilter(name, FilterEvento, "Todos participando do evento.", false);
+		Format(name, len, "@!%sevento", teams[i]);
+		AddMultiTargetFilter(name, FilterEvento, "Todos não paticipando do evento.", false);
+	}
+
+	/*static const char classes[][] = {
+		"sco",
+		"sol",
+		"dem",
+		"med",
+		"spy",
+		"eng",
+	};*/
 }
 
 stock bool FilterEvento(const char[] filter, ArrayList clients)
@@ -39,12 +62,33 @@ stock bool FilterEvento(const char[] filter, ArrayList clients)
 	if(StrContains(filter, "!") != -1) {
 		opposite = true;
 	}
+	
+	TFTeam team = TFTeam_Spectator;
+	if(StrContains(filter, "red") != -1) {
+		team = TFTeam_Red;
+	} else if(StrContains(filter, "blu") != -1) {
+		team = TFTeam_Blue;
+	}
+
+	TFClassType class = TFClass_Unknown;
 
 	for(int i = 1; i <= MaxClients; i++) {
 		if(opposite && bParticipating[i]) {
 			continue;
 		} else if(!opposite && !bParticipating[i]) {
 			continue;
+		}
+
+		if(team != TFTeam_Spectator) {
+			if(TF2_GetClientTeam(i) != team) {
+				continue;
+			}
+		}
+
+		if(class != TFClass_Unknown) {
+			if(TF2_GetPlayerClass(i) != class) {
+				continue;
+			}
 		}
 
 		clients.Push(i);
