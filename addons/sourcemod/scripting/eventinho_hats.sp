@@ -506,9 +506,11 @@ public void Eventinho_OnPlayersWonEvent(ArrayList players, Evento event)
 
 	int len = players.Length;
 	for(int i = 0; i < len; i++) {
+		int client = players.Get(i);
+		
 		if(hDB != null) {
 			int num = 1;
-			int steamid = GetSteamAccountID(i);
+			int steamid = GetSteamAccountID(client);
 
 			Transaction hTR = new Transaction();
 
@@ -522,18 +524,18 @@ public void Eventinho_OnPlayersWonEvent(ArrayList players, Evento event)
 			hDB.Execute(hTR, INVALID_FUNCTION, OnError);
 		}
 
-		if(hPlayerRewards[i] == null) {
+		if(hPlayerRewards[client] == null) {
 			ArrayList rewards = CacheRewards(event, nome);
-			hPlayerRewards[i] = rewards;
+			hPlayerRewards[client] = rewards;
 
-			SetClientCookie(i, hCoroaCookie, "");
-		} else if(hPlayerRewards[i] == DISABLE_REWARDS) {
+			SetClientCookie(client, hCoroaCookie, "");
+		} else if(hPlayerRewards[client] == DISABLE_REWARDS) {
 			continue;
-		} else if(hPlayerRewards[i] == RANDOM_REWARDS) {
+		} else if(hPlayerRewards[client] == RANDOM_REWARDS) {
 			continue;
 		}
 
-		GiveItems(i);
+		GiveItems(client);
 	}
 }
 
