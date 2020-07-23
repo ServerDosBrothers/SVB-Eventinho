@@ -17,5 +17,7 @@ stock int Native_EventRewardAttribute_GetValue(Handle plugin, int params)
     EventRewardAttribute attribute = GetNativeCell(1);
     JSONObject attribute_json = view_as<JSONObject>(attribute);
 
-    return view_as<int>(attribute_json.GetFloat("value"));
+	int value_int = attribute_json.GetInt("value");
+	float value_float = float(value_int);
+    return view_as<int>(value_float);
 }
