@@ -76,7 +76,7 @@ native bool Eventinho_IsParticipating(int client);
 native void Eventinho_ReDisplayOptionsMenu(int client, const char[] event, StringMap options);
 
 forward void Eventinho_OnEventStateChanged(Evento event);
-forward void Eventinho_OnPlayerWonEvent(int client, Evento event);
+forward void Eventinho_OnPlayersWonEvent(ArrayList players, Evento event);
 forward void Eventinho_OnPlayerParticipating(int client, Evento event, bool is);
 forward void Eventinho_OnEventStarted(Evento event, StringMap options, int admin);
 forward void Eventinho_ModifyDefaultOptions(const char[] name, StringMap options);

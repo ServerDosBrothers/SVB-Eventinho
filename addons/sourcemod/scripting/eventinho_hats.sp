@@ -3,17 +3,25 @@
 #include <sdkhooks>
 #include <eventinho>
 #include <tf2_stocks>
+#include <morecolors>
+#include <clientprefs>
 
 #define EF_BONEMERGE 0x001
 #define EF_BONEMERGE_FASTCULL 0x080
 #define EF_PARENT_ANIMATES 0x200
 
+#define CHAT_PREFIX "{dodgerblue}[Evento]{default} "
+
 Handle hDummyItemView = null;
 Handle hEquipWearable = null;
+
+#define DISABLE_REWARDS view_as<ArrayList>(-1)
+#define RANDOM_REWARDS view_as<ArrayList>(-2)
 
 ArrayList hPlayerItems[MAXPLAYERS+1] = {null, ...};
 ArrayList hPlayerRewards[MAXPLAYERS+1] = {null, ...};
 ArrayList hEventRewards = null;
+Handle hCoroaCookie = null;
 
 Database hDB = null;
 
@@ -64,8 +72,40 @@ public void OnPluginStart()
 
 	hEventRewards = new ArrayList();
 
+	RegConsoleCmd("sm_coroa", ConCommand_Coroa);
+
+	hCoroaCookie = RegClientCookie("coroa_preferida_v3", "Coroa preferida.", CookieAccess_Private);
+
 	if(SQL_CheckConfig("eventinho_hats")) {
 		Database.Connect(OnConnect, "eventinho_hats");
+	}
+
+	for(int i = 1; i <= MaxClients; i++) {
+		if(AreClientCookiesCached(i)) {
+			OnClientCookiesCached(i);
+		}
+	}
+}
+
+public void OnClientCookiesCached(int client)
+{
+	char value[64];
+	GetClientCookie(client, hCoroaCookie, value, sizeof(value));
+	
+	if(value[0] == '\0'){
+		return;
+	}
+
+	if(StrEqual(value, "aleatoria")) {
+		hPlayerRewards[client] = RANDOM_REWARDS;
+	} else if(StrEqual(value, "remover")) {
+		hPlayerRewards[client] = DISABLE_REWARDS;
+	} else {
+		Evento event = null;
+		Eventinho_FindEvento(value, event);
+
+		ArrayList rewards = CacheRewards(event, value);
+		hPlayerRewards[client] = rewards;
 	}
 }
 
@@ -131,6 +171,106 @@ stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] resul
 	}
 }
 
+stock void DisplayCoroaMenu(int client, int item = -1)
+{
+	Handle style = GetMenuStyleHandle(MenuStyle_Default);
+	
+	Menu menu = CreateMenuEx(style, MenuHandler_Coroa, MENU_ACTIONS_DEFAULT);
+	menu.SetTitle("Coroa");
+	
+	int accid = GetSteamAccountID(client);
+
+	for(int i = 1; i < view_as<int>(EventoTipoMax); i++) {
+		if(accid == VencedoresID[i]) {
+			char nome[32];
+			Evento_Nome(view_as<EventoTipo>(i), nome, sizeof(nome));
+			
+			menu.AddItem(nome, nome, ((CoroaPreferida[client] == view_as<EventoTipo>(i)) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT));
+		}
+	}
+}
+
+stock int MenuHandler_Coroa(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select) {
+		char nome[32];
+		menu.GetItem(param2, nome, sizeof(nome));
+
+		SetClientCookie(param1, hCoroaCookie, nome);
+
+		DeleteItems(param1);
+
+		if(StrEqual(nome, "remover")) {
+			hPlayerRewards[param1] = DISABLE_REWARDS;
+		} else {
+			if(StrEqual(nome, "aleatoria")) {
+				hPlayerRewards[param1] = RANDOM_REWARDS;
+			} else {
+				Evento event = null;
+				Eventinho_FindEvento(nome, event);
+
+				ArrayList rewards = CacheRewards(event, nome);
+				hPlayerRewards[param1] = rewards;
+			}
+
+			GiveItems(param1);
+		}
+	} else if(action == MenuAction_End) {
+		delete menu;
+	}
+	
+	return 0;
+}
+
+stock void GetRewardsMenu(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
+{
+	int client = data;
+
+	Handle style = GetMenuStyleHandle(MenuStyle_Default);
+	
+	Menu menu = CreateMenuEx(style, MenuHandler_Coroa, MENU_ACTIONS_DEFAULT);
+	menu.SetTitle("Coroa");
+
+	if(numQueries > 0) {
+		DBResultSet set = results[0];
+		if(set.HasResults) {
+			while(set.MoreRows) {
+				if(!set.FetchRow() ||
+					set.FieldCount == 0) {
+					break;
+				}
+
+				char nome[64];
+				set.FetchString(0, nome, sizeof(nome));
+
+				menu.AddItem(nome, nome, ITEMDRAW_DEFAULT);
+			}
+		}
+	}
+
+	menu.AddItem("aleatoria", "aleatoria", ITEMDRAW_DEFAULT);
+	menu.AddItem("remover", "remover", ITEMDRAW_DEFAULT);
+	
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+stock Action ConCommand_Coroa(int client, int args)
+{
+	if(hDB != null) {
+		Transaction hTR = new Transaction();
+
+		int steamid = GetSteamAccountID(client);
+
+		char query[255];
+		hDB.Format(query, sizeof(query), "select evento from vencedores where steamid=%i;", steamid);
+		hTR.AddQuery(query);
+
+		hDB.Execute(hTR, GetRewardsMenu, OnError, client);
+	}
+
+	return Plugin_Handled;
+}
+
 stock void GiveItems(int player)
 {
 	if(hPlayerRewards[player] == null) {
@@ -145,6 +285,10 @@ stock void GiveItems(int player)
 
 			hDB.Execute(hTR, GetRewards, OnError, player);
 		}
+		return;
+	} else if(hPlayerRewards[player] == DISABLE_REWARDS) {
+		return;
+	} else if(hPlayerRewards[player] == RANDOM_REWARDS) {
 		return;
 	}
 
@@ -338,27 +482,15 @@ stock void OnConnect(Database db, const char[] error, any data)
 	}
 }
 
-public void Eventinho_OnPlayerWonEvent(int client, Evento event)
+public void Eventinho_OnPlayersWonEvent(ArrayList players, Evento event)
 {
 	char nome[64];
 	event.GetName(nome, sizeof(nome));
 
-	if(hPlayerRewards[client] == null) {
-		ArrayList rewards = CacheRewards(event, nome);
-		hPlayerRewards[client] = rewards;
-	}
-
-	GiveItems(client);
-
 	if(hDB != null) {
-		int num = 1;
-
-		int steamid = GetSteamAccountID(client);
-
 		Transaction hTR = new Transaction();
 
 		char query[255];
-
 		hDB.Format(query, sizeof(query), "select steamid from vencedores where evento='%s';", nome);
 		hTR.AddQuery(query);
 
@@ -366,16 +498,42 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 
 		hTR = new Transaction();
 
-		/*hDB.Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento='%s';", steamid, nome);
-		hTR.AddQuery(query);*/
-
 		hDB.Format(query, sizeof(query), "delete from vencedores where evento='%s';", nome);
 		hTR.AddQuery(query);
 
-		hDB.Format(query, sizeof(query), "insert into vencedores values(%i, '%s', %i);", steamid, nome, num);
-		hTR.AddQuery(query);
-
 		hDB.Execute(hTR, INVALID_FUNCTION, OnError);
+	}
+
+	int len = players.Length;
+	for(int i = 0; i < len; i++) {
+		if(hDB != null) {
+			int num = 1;
+			int steamid = GetSteamAccountID(i);
+
+			Transaction hTR = new Transaction();
+
+			/*hDB.Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento='%s';", steamid, nome);
+			hTR.AddQuery(query);*/
+
+			char query[255];
+			hDB.Format(query, sizeof(query), "insert into vencedores values(%i, '%s', %i);", steamid, nome, num);
+			hTR.AddQuery(query);
+
+			hDB.Execute(hTR, INVALID_FUNCTION, OnError);
+		}
+
+		if(hPlayerRewards[i] == null) {
+			ArrayList rewards = CacheRewards(event, nome);
+			hPlayerRewards[i] = rewards;
+
+			SetClientCookie(i, hCoroaCookie, "");
+		} else if(hPlayerRewards[i] == DISABLE_REWARDS) {
+			continue;
+		} else if(hPlayerRewards[i] == RANDOM_REWARDS) {
+			continue;
+		}
+
+		GiveItems(i);
 	}
 }
 
@@ -394,6 +552,7 @@ stock void OnGetLastWinners(Database db, any data, int numQueries, DBResultSet[]
 				int owner = PlayerBySteamID(steamid);
 				if(owner != -1) {
 					OnClientDisconnect(owner);
+					SetClientCookie(owner, hCoroaCookie, "");
 				}
 			}
 		}

@@ -371,6 +371,7 @@ stock void __Internal_EndEvent(Evento event, ArrayList winners)
 			int client = winners.Get(i);
 			
 			if(!Eventinho_IsParticipating(client)) {
+				winners.Erase(i);
 				continue;
 			}
 
@@ -382,12 +383,14 @@ stock void __Internal_EndEvent(Evento event, ArrayList winners)
 
 			EmitGameSoundToAll("Achievement.Earned", client, SND_NOFLAGS, -1, origin, NULL_VECTOR, true, 0.0);
 			
-			Call_StartForward(hOnPlayerWonEvent);
-			Call_PushCell(client);
+			found = true;
+		}
+
+		if(found) {
+			Call_StartForward(hOnPlayersWonEvent);
+			Call_PushCell(winners);
 			Call_PushCell(event);
 			Call_Finish();
-			
-			found = true;
 		}
 		
 		if(!found) {
