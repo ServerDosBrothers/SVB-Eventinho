@@ -77,7 +77,8 @@ public void OnClientPutInServer(int client)
 public void OnPluginEnd()
 {
 	for(int i = 1; i <= MaxClients; i++) {
-		if(IsClientInGame(i)) {
+		if(IsClientInGame(i) &&
+			!IsFakeClient(i)) {
 			OnClientDisconnect(i);
 		}
 	}
@@ -86,6 +87,7 @@ public void OnPluginEnd()
 public void OnClientDisconnect(int client)
 {
 	DeleteItems(client);
+	delete hPlayerItems[client];
 	hPlayerRewards[client] = null;
 }
 
@@ -107,23 +109,25 @@ stock void DeleteItems(int player)
 
 stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
-	if(db != null) {
-		if(numQueries > 0) {
-			DBResultSet set = results[0];
+	if(numQueries > 0) {
+		DBResultSet set = results[0];
 
-			if(set.FetchRow() && set.HasResults && set.FieldCount > 0) {
-				char nome[64];
-				set.FetchString(0, nome, sizeof(nome));
-
-				Evento event = null;
-				Eventinho_FindEvento(nome, event);
-
-				ArrayList rewards = CacheRewards(event, nome);
-				hPlayerRewards[data] = rewards;
-
-				GiveItems(data);
-			}
+		if(!set.HasResults ||
+			!set.FetchRow() ||
+			set.FieldCount == 0) {
+			return;
 		}
+
+		char nome[64];
+		set.FetchString(0, nome, sizeof(nome));
+
+		Evento event = null;
+		Eventinho_FindEvento(nome, event);
+
+		ArrayList rewards = CacheRewards(event, nome);
+		hPlayerRewards[data] = rewards;
+
+		GiveItems(data);
 	}
 }
 
@@ -136,7 +140,7 @@ stock void GiveItems(int player)
 			int steamid = GetSteamAccountID(player);
 
 			char query[255];
-			hDB.Format(query, sizeof(query), "select evento from vencedores where steamid=%i", steamid);
+			hDB.Format(query, sizeof(query), "select evento from vencedores where steamid=%i;", steamid);
 			hTR.AddQuery(query);
 
 			hDB.Execute(hTR, GetRewards, OnError, player);
@@ -146,7 +150,9 @@ stock void GiveItems(int player)
 
 	DeleteItems(player);
 
-	hPlayerItems[player] = new ArrayList();
+	if(hPlayerItems[player] == null) {
+		hPlayerItems[player] = new ArrayList();
+	}
 
 	int len = hPlayerRewards[player].Length;
 	for(int i = 0; i < len; i++) {
@@ -158,6 +164,7 @@ stock void GiveItems(int player)
 		reward.GetAttributes(attributes);
 
 		int len2 = attributes.Length;
+		TF2Items_SetNumAttributes(hDummyItemView, len2);
 		for(int j = 0; j < len2; j++) {
 			EventRewardAttribute attribute = attributes.Get(j);
 
@@ -166,7 +173,7 @@ stock void GiveItems(int player)
 
 			TF2Items_SetAttribute(hDummyItemView, j, index, value);
 		}
-		TF2Items_SetNumAttributes(hDummyItemView, len2);
+		delete attributes;
 
 		int entity = TF2Items_GiveNamedItem(player, hDummyItemView);
 		DispatchSpawn(entity);
@@ -227,10 +234,10 @@ stock void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 stock int PlayerBySteamID(int accid)
 {
 	for(int i = 1; i <= MaxClients; i++) {
-		if(IsClientInGame(i)) {
-			if(GetSteamAccountID(i) == accid) {
-				return i;
-			}
+		if(IsClientInGame(i) &&
+			!IsFakeClient(i) &&
+			GetSteamAccountID(i) == accid) {
+			return i;
 		}
 	}
 	return -1;
@@ -249,11 +256,8 @@ public void OnEntityDestroyed(int entity)
 		int accid = GetEntProp(entity, Prop_Send, "m_iAccountID");
 		int owner = PlayerBySteamID(accid);
 
-		if(owner == -1) {
-			return;
-		}
-
-		if(hPlayerItems[owner] == null) {
+		if(owner == -1 ||
+			hPlayerItems[owner] == null) {
 			return;
 		}
 		
@@ -324,8 +328,11 @@ stock void OnConnect(Database db, const char[] error, any data)
 		}
 
 		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientInGame(i)) {
-				OnClientPutInServer(i);
+			if(IsClientInGame(i) &&
+				!IsFakeClient(i) &&
+				IsPlayerAlive(i) &&
+				GetClientTeam(i) > 1) {
+				GiveItems(i);
 			}
 		}
 	}
@@ -351,6 +358,14 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 		Transaction hTR = new Transaction();
 
 		char query[255];
+
+		hDB.Format(query, sizeof(query), "select steamid from vencedores where evento='%s';", nome);
+		hTR.AddQuery(query);
+
+		hDB.Execute(hTR, OnGetLastWinners, OnError);
+
+		hTR = new Transaction();
+
 		/*hDB.Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento='%s';", steamid, nome);
 		hTR.AddQuery(query);*/
 
@@ -361,6 +376,27 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 		hTR.AddQuery(query);
 
 		hDB.Execute(hTR, INVALID_FUNCTION, OnError);
+	}
+}
+
+stock void OnGetLastWinners(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
+{
+	if(numQueries > 0) {
+		DBResultSet set = results[0];
+		if(set.HasResults) {
+			while(set.MoreRows) {
+				if(!set.FetchRow() ||
+					set.FieldCount == 0) {
+					break;
+				}
+
+				int steamid = set.FetchInt(0);
+				int owner = PlayerBySteamID(steamid);
+				if(owner != -1) {
+					OnClientDisconnect(owner);
+				}
+			}
+		}
 	}
 }
 
