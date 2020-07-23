@@ -133,13 +133,10 @@ stock void GiveItems(int player)
 		if(hDB != null) {
 			Transaction hTR = new Transaction();
 
-			char auth[64];
-			GetClientAuthId(player, AuthId_SteamID64, auth, sizeof(auth));
-
-			int steamid = StringToInt(auth);
+			int steamid = GetSteamAccountID(player);
 
 			char query[255];
-			Format(query, sizeof(query), "select evento from vencedores where steamid=%i", steamid);
+			hDB.Format(query, sizeof(query), "select evento from vencedores where steamid=%i", steamid);
 			hTR.AddQuery(query);
 
 			hDB.Execute(hTR, GetRewards, OnError, player);
@@ -294,7 +291,8 @@ stock void OnConnect(Database db, const char[] error, any data)
 	if(db != null) {
 		hDB = db;
 		
-		if(!g_bLateLoaded) {
+		//if(!g_bLateLoaded)
+		{
 			hDB.SetCharset("utf8");
 
 			Transaction hTR = new Transaction();
@@ -305,7 +303,7 @@ stock void OnConnect(Database db, const char[] error, any data)
 				"	evento varchar(255) not null," ...
 				"	itemid int not null," ...
 				"	model varchar(255) not null," ...
-				"	unusual int not null" ...
+				"	unusual int not null," ...
 				"	primary key (evento,itemid,model,unusual)" ...
 				");"
 			};
@@ -316,7 +314,7 @@ stock void OnConnect(Database db, const char[] error, any data)
 				"create table if not exists vencedores (" ...
 				"	steamid int not null," ...
 				"	evento varchar(255) not null," ...
-				"	numero int not null" ...
+				"	numero int not null," ...
 				"	primary key (steamid,evento)" ...
 				");"
 			};
@@ -348,21 +346,18 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 	if(hDB != null) {
 		int num = 1;
 
-		char auth[64];
-		GetClientAuthId(client, AuthId_SteamID64, auth, sizeof(auth));
-
-		int steamid = StringToInt(auth);
+		int steamid = GetSteamAccountID(client);
 
 		Transaction hTR = new Transaction();
 
 		char query[255];
-		/*Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento=%s", steamid, nome);
+		/*hDB.Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento='%s';", steamid, nome);
 		hTR.AddQuery(query);*/
 
-		Format(query, sizeof(query), "delete from vencedores where evento=%s;", nome);
+		hDB.Format(query, sizeof(query), "delete from vencedores where evento='%s';", nome);
 		hTR.AddQuery(query);
 
-		Format(query, sizeof(query), "insert into vencedores values(%i, %s, %i);", steamid, nome, num);
+		hDB.Format(query, sizeof(query), "insert into vencedores values(%i, '%s', %i);", steamid, nome, num);
 		hTR.AddQuery(query);
 
 		hDB.Execute(hTR, INVALID_FUNCTION, OnError);
@@ -371,5 +366,5 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 
 stock void OnError(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
 {
-	LogMessage("Deu erro: %s", error);
+	LogError("Deu erro: %s", error);
 }

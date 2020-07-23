@@ -746,7 +746,7 @@ stock Action ConCommand_Time_IMPL_IMPL(int client, int args, bool admin, const c
 			
 			menu.DrawItem("", ITEMDRAW_SPACER);
 
-			DrawTextFormated(menu, "%N esta convidando voçe a entrar no time dele.", selected_player);
+			DrawTextFormated(menu, "%N esta convidando você a entrar no time dele.", selected_player);
 			
 			menu.DrawItem("", ITEMDRAW_SPACER);
 

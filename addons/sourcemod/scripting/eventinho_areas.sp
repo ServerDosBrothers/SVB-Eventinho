@@ -244,7 +244,7 @@ stock void Teleport_Player(int player, bool print, const char[] nome)
 			TF2_RegeneratePlayer(player);
 			g_bTeleported[player] = true;
 			if(print) {
-				CPrintToChat(player, CHAT_PREFIX ... "Voçe foi teleportado para o local do %s.", nome);
+				CPrintToChat(player, CHAT_PREFIX ... "Você foi teleportado para o local do %s.", nome);
 			}
 		}
 	}
