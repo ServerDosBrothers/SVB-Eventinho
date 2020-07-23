@@ -3,8 +3,14 @@ JSONArray jsonEventos = null;
 
 stock void Evento_Init()
 {
-	hApiClient = new HTTPClient(API_URL);
-	hApiClient.SetHeader("apikey", API_KEY);
+	char url[64];
+	API_URL.GetString(url, sizeof(url));
+
+	char key[64];
+	API_KEY.GetString(key, sizeof(key));
+
+	hApiClient = new HTTPClient(url);
+	hApiClient.SetHeader("apikey", key);
 	hApiClient.Get("/eventos", RestEventos);
 }
 

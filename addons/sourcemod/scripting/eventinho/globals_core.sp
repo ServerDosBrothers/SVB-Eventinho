@@ -1,9 +1,6 @@
 #define CHAT_PREFIX "{dodgerblue}[Evento]{default} "
 #define CONS_PREFIX "[Evento] "
 
-#define API_URL "http://api.svbrothers.tk/v1/eventinho"
-#define API_KEY "teste"
-
 #define DEFAULT_START_COUNTDOWN 10.0
 #define DEFAULT_WARN_COUNTDOWN countdown / 3
 
@@ -19,9 +16,14 @@ ArrayList g_Time[MAXPLAYERS+1] = {null, ...};
 int g_TimeEntrado[MAXPLAYERS+1] = {-1, ...};
 int g_TmpAdmin = -1;
 int g_tmpConvidarPlayer[MAXPLAYERS+1] = {-1, ...};
+ConVar API_URL = null;
+ConVar API_KEY = null;
 
 stock void Core_Init()
 {
+	API_URL = CreateConVar("sm_eventinho_api", "http://api.svdosbrothers.com/v1/eventinho");
+	API_KEY = CreateConVar("sm_eventinho_key", "teste");
+
 	hOptionsMap = new StringMap();
 	hOptionsMap.SetString("tf_weapon_criticals", "Crits");
 

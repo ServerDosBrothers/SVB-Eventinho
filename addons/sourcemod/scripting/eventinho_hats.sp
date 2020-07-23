@@ -105,9 +105,45 @@ stock void DeleteItems(int player)
 	delete hPlayerItems[player];
 }
 
+stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
+{
+	if(db != null) {
+		if(numQueries > 0) {
+			DBResultSet set = results[0];
+
+			if(set.FetchRow() && set.HasResults && set.FieldCount > 0) {
+				char nome[64];
+				set.FetchString(0, nome, sizeof(nome));
+
+				Evento event = null;
+				Eventinho_FindEvento(nome, event);
+
+				ArrayList rewards = CacheRewards(event, nome);
+				hPlayerRewards[data] = rewards;
+
+				GiveItems(data);
+			}
+		}
+	}
+}
+
 stock void GiveItems(int player)
 {
 	if(hPlayerRewards[player] == null) {
+		if(hDB != null) {
+			Transaction hTR = new Transaction();
+
+			char auth[64];
+			GetClientAuthId(player, AuthId_SteamID64, auth, sizeof(auth));
+
+			int steamid = StringToInt(auth);
+
+			char query[255];
+			Format(query, sizeof(query), "select evento from vencedores where steamid=%i", steamid);
+			hTR.AddQuery(query);
+
+			hDB.Execute(hTR, GetRewards, OnError, player);
+		}
 		return;
 	}
 
@@ -286,7 +322,7 @@ stock void OnConnect(Database db, const char[] error, any data)
 			};
 			hTR.AddQuery(table_winners);
 
-			hDB.Execute(hTR);
+			hDB.Execute(hTR, INVALID_FUNCTION, OnError);
 		}
 
 		for(int i = 1; i <= MaxClients; i++) {
@@ -320,15 +356,20 @@ public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 		Transaction hTR = new Transaction();
 
 		char query[255];
-		/*FormatEx(query, sizeof(query), "select numero from vencedores where steamid=%i and evento=%s", steamid, nome);
+		/*Format(query, sizeof(query), "select numero from vencedores where steamid=%i and evento=%s", steamid, nome);
 		hTR.AddQuery(query);*/
 
-		FormatEx(query, sizeof(query), "delete from vencedores where evento=%s;", nome);
+		Format(query, sizeof(query), "delete from vencedores where evento=%s;", nome);
 		hTR.AddQuery(query);
 
-		FormatEx(query, sizeof(query), "insert into vencedores values(%i, %s, %i);", steamid, nome, num);
+		Format(query, sizeof(query), "insert into vencedores values(%i, %s, %i);", steamid, nome, num);
 		hTR.AddQuery(query);
 
-		hDB.Execute(hTR);
+		hDB.Execute(hTR, INVALID_FUNCTION, OnError);
 	}
+}
+
+stock void OnError(Database db, any data, int numQueries, const char[] error, int failIndex, any[] queryData)
+{
+	LogMessage("Deu erro: %s", error);
 }
