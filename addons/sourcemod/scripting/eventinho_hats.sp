@@ -13,6 +13,9 @@ Handle hEquipWearable = null;
 
 ArrayList hPlayerItems[MAXPLAYERS+1] = {null, ...};
 ArrayList hPlayerRewards[MAXPLAYERS+1] = {null, ...};
+ArrayList hEventRewards = null;
+
+Database hDB = null;
 
 public Plugin myinfo =
 {
@@ -22,6 +25,14 @@ public Plugin myinfo =
 	version = "",
 	url = ""
 };
+
+bool g_bLateLoaded = false;
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int length)
+{
+	g_bLateLoaded = late;
+	return APLRes_Success;
+}
 
 public void OnPluginStart()
 {
@@ -51,10 +62,10 @@ public void OnPluginStart()
 	HookEvent("post_inventory_application", Event_Inventory);
 	HookEvent("player_death", Event_PlayerDeath);
 
-	for(int i = 1; i <= MaxClients; i++) {
-		if(IsClientInGame(i)) {
-			OnClientPutInServer(i);
-		}
+	hEventRewards = new ArrayList();
+
+	if(SQL_CheckConfig("eventinho_hats")) {
+		Database.Connect(OnConnect, "eventinho_hats");
 	}
 }
 
@@ -75,7 +86,7 @@ public void OnPluginEnd()
 public void OnClientDisconnect(int client)
 {
 	DeleteItems(client);
-	delete hPlayerRewards[client];
+	hPlayerRewards[client] = null;
 }
 
 stock void DeleteItems(int player)
@@ -99,6 +110,10 @@ stock void GiveItems(int player)
 	if(hPlayerRewards[player] == null) {
 		return;
 	}
+
+	DeleteItems(player);
+
+	hPlayerItems[player] = new ArrayList();
 
 	int len = hPlayerRewards[player].Length;
 	for(int i = 0; i < len; i++) {
@@ -154,10 +169,6 @@ stock void GiveItems(int player)
 		if(!StrEqual(model, "")) {
 			SetEntityModel(entity, model);
 		}*/
-
-		if(hPlayerItems[player] == null) {
-			hPlayerItems[player] = new ArrayList();
-		}
 
 		hPlayerItems[player].Push(entity);
 	}
@@ -224,12 +235,100 @@ public void OnEntityDestroyed(int entity)
 	}
 }
 
+stock ArrayList CacheRewards(Evento event, const char[] nome)
+{
+	if(hEventRewards == null) {
+		hEventRewards = new ArrayList();
+	}
+
+	int id = hEventRewards.FindString(nome);
+	if(id == -1) {
+		id = hEventRewards.PushString(nome);
+		ArrayList rewards = new ArrayList();
+		event.GetRewards(rewards);
+		hEventRewards.Push(rewards);
+		return rewards;
+	} else {
+		return hEventRewards.Get(id+1);
+	}
+}
+
+stock void OnConnect(Database db, const char[] error, any data)
+{
+	if(db != null) {
+		hDB = db;
+		
+		if(!g_bLateLoaded) {
+			hDB.SetCharset("utf8");
+
+			Transaction hTR = new Transaction();
+
+			/*
+			static const char table_hats[] = {
+				"create table if not exists hats ("
+				"	evento varchar(255) not null," ...
+				"	itemid int not null," ...
+				"	model varchar(255) not null," ...
+				"	unusual int not null" ...
+				"	primary key (evento,itemid,model,unusual)" ...
+				");"
+			};
+			hTR.AddQuery(table_hats);
+			*/
+
+			static const char table_winners[] = {
+				"create table if not exists vencedores (" ...
+				"	steamid int not null," ...
+				"	evento varchar(255) not null," ...
+				"	numero int not null" ...
+				"	primary key (steamid,evento)" ...
+				");"
+			};
+			hTR.AddQuery(table_winners);
+
+			hDB.Execute(hTR);
+		}
+
+		for(int i = 1; i <= MaxClients; i++) {
+			if(IsClientInGame(i)) {
+				OnClientPutInServer(i);
+			}
+		}
+	}
+}
+
 public void Eventinho_OnPlayerWonEvent(int client, Evento event)
 {
-	DeleteItems(client);
-	delete hPlayerRewards[client];
-	hPlayerRewards[client] = new ArrayList();
-	event.GetRewards(hPlayerRewards[client]);
-	DeleteItems(client);
+	char nome[64];
+	event.GetName(nome, sizeof(nome));
+
+	if(hPlayerRewards[client] == null) {
+		ArrayList rewards = CacheRewards(event, nome);
+		hPlayerRewards[client] = rewards;
+	}
+
 	GiveItems(client);
+
+	if(hDB != null) {
+		int num = 1;
+
+		char auth[64];
+		GetClientAuthId(client, AuthId_SteamID64, auth, sizeof(auth));
+
+		int steamid = StringToInt(auth);
+
+		Transaction hTR = new Transaction();
+
+		char query[255];
+		/*FormatEx(query, sizeof(query), "select numero from vencedores where steamid=%i and evento=%s", steamid, nome);
+		hTR.AddQuery(query);*/
+
+		FormatEx(query, sizeof(query), "delete from vencedores where evento=%s;", nome);
+		hTR.AddQuery(query);
+
+		FormatEx(query, sizeof(query), "insert into vencedores values(%i, %s, %i);", steamid, nome, num);
+		hTR.AddQuery(query);
+
+		hDB.Execute(hTR);
+	}
 }
