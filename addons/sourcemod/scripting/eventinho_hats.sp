@@ -20,7 +20,7 @@ Handle hEquipWearable = null;
 
 ArrayList hPlayerItems[MAXPLAYERS+1] = {null, ...};
 ArrayList hPlayerRewards[MAXPLAYERS+1] = {null, ...};
-ArrayList hEventRewards = null;
+StringMap hEventRewards = null;
 Handle hCoroaCookie = null;
 
 Database hDB = null;
@@ -70,7 +70,7 @@ public void OnPluginStart()
 	HookEvent("post_inventory_application", Event_Inventory);
 	HookEvent("player_death", Event_PlayerDeath);
 
-	hEventRewards = new ArrayList();
+	hEventRewards = new StringMap();
 
 	RegConsoleCmd("sm_coroa", ConCommand_Coroa);
 
@@ -419,19 +419,17 @@ public void OnEntityDestroyed(int entity)
 stock ArrayList CacheRewards(Evento event, const char[] nome)
 {
 	if(hEventRewards == null) {
-		hEventRewards = new ArrayList();
+		hEventRewards = new StringMap();
 	}
 
-	int id = hEventRewards.FindString(nome);
-	if(id == -1) {
-		id = hEventRewards.PushString(nome);
-		ArrayList rewards = new ArrayList();
+	ArrayList rewards = null;
+	if(!hEventRewards.GetValue(nome, rewards) || rewards == null) {
+		rewards = new ArrayList();
 		event.GetRewards(rewards);
-		hEventRewards.Push(rewards);
-		return rewards;
-	} else {
-		return hEventRewards.Get(id+1);
+		hEventRewards.SetValue(nome, rewards);
 	}
+
+	return rewards;
 }
 
 stock void OnConnect(Database db, const char[] error, any data)

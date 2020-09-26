@@ -144,6 +144,10 @@ stock int Native_Evento_GetOptions(Handle plugin, int params)
 
 stock int Native_Eventinho_GetAllEvents(Handle plugin, int params)
 {
+	if(jsonEventos == null) {
+		return 0;
+	}
+	
 	ArrayList list = GetNativeCell(1);
 	
 	for(int i = 0; i < jsonEventos.Length; i++) {

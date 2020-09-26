@@ -17,8 +17,7 @@ stock void ChatAndHUD(int client, const char[] format, any ...)
 
 	CPrintToChat(client, buffer);
 
-	ReplaceString(buffer, sizeof(buffer), "{dodgerblue}", "");
-	ReplaceString(buffer, sizeof(buffer), "{default}", "");
+	CRemoveTags(buffer, sizeof(buffer));
 
 	SetHudTextParams(-1.0, 0.2, 5.0, 30, 144, 255, 255, 1, 0.5, 0.5, 0.5);
 	ShowHudText(client, -1, buffer);
@@ -32,8 +31,7 @@ stock void ChatAndHUDAll(const char[] format, any ...)
 	char buffer2[255];
 	strcopy(buffer2, sizeof(buffer2), buffer);
 
-	ReplaceString(buffer2, sizeof(buffer2), "{dodgerblue}", "");
-	ReplaceString(buffer2, sizeof(buffer2), "{default}", "");
+	CRemoveTags(buffer2, sizeof(buffer2));
 
 	SetHudTextParams(-1.0, 0.2, 5.0, 30, 144, 255, 255, 1, 0.5, 0.5, 0.5);
 
