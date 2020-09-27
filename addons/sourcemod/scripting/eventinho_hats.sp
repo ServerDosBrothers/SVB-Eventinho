@@ -149,6 +149,10 @@ stock void DeleteItems(int player)
 
 stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
+	if(!IsClientInGame(data) || IsFakeClient(data)) {
+		return;
+	}
+	
 	if(numQueries > 0) {
 		DBResultSet set = results[0];
 
