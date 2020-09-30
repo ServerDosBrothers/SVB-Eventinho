@@ -132,13 +132,7 @@ public void OnClientDisconnect(int client)
 {
 	DeleteItems(client);
 	delete hPlayerItems[client];
-	
-	int len = hPlayerRewards[client].Length;
-	for(int i = 0; i < len; i++) {
-		EventReward reward = hPlayerRewards[client].Get(i);
-		delete reward;
-	}
-	delete hPlayerRewards[client];
+	hPlayerRewards[client] = null;
 }
 
 stock void DeleteItems(int player)
