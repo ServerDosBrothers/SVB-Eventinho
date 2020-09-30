@@ -22,6 +22,8 @@ stock Action ConCommand_ListaEventos(int client, int args)
 		char nome[64];
 		evento.GetName(nome, sizeof(nome));
 		
+		delete evento;
+		
 		PrintToConsole(client, "%s", nome);
 	}
 	

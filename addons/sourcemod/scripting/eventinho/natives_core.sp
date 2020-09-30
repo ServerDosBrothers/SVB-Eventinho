@@ -65,7 +65,7 @@ stock bool __Eventinho_StartEvent_IMPL(const char[] nome, StringMap options, flo
 	if(!MapSupportsEvent(hCurrentEvent)) {
 		hCurrentEvent.SetState(EventEnded);
 		PrintToServer("[Evento] Mapa não supporta %s.", nome);
-		hCurrentEvent = null;
+		delete hCurrentEvent;
 		return false;
 	}
 	
@@ -252,6 +252,9 @@ stock void __Internal_StartEvent(Evento event, StringMap options)
 		
 		char value[64];
 		command.GetValue(value, sizeof(value));
+		
+		delete command;
+		
 		Get0Or1(value, value, sizeof(value));
 		
 		FindOptionCommand(key, key, sizeof(key));
@@ -353,6 +356,8 @@ stock void __Internal_EndEvent(Evento event, ArrayList winners)
 		char value[64];
 		command.GetValue(value, sizeof(value));
 		
+		delete command;
+		
 		ServerCommand("%s %s", key, value);
 	}
 	
@@ -404,7 +409,7 @@ stock void __Internal_EndEvent(Evento event, ArrayList winners)
 		Eventinho_Participate(i, false);
 	}
 	
-	hCurrentEvent = null;
+	delete hCurrentEvent;
 }
 
 stock Action SetTransmit(int entity, int client)
@@ -497,6 +502,8 @@ stock int Native_Eventinho_FindEvento(Handle plugin, int params)
 			evento = tmp;
 			break;
 		}
+		
+		delete tmp;
 	}
 	
 	delete eventos;

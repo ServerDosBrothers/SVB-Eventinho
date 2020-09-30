@@ -34,6 +34,7 @@ methodmap EventReward < Handle
 	public native int GetItemID();
 	public native void GetModel(char[] model, int size);
 
+	// Elements inside the array must be freed via delete or CloseHandle().
 	public native void GetAttributes(ArrayList list);
 };
 
@@ -54,10 +55,16 @@ methodmap Evento < Handle
 	public native void GetName(char[] name, int size);
 	public native void GetDescription(char[] desc, int size);
 	
+	// Elements inside the array must be freed via delete or CloseHandle().
 	public native void GetStartCommands(ArrayList list);
+	
+	// Elements inside the array must be freed via delete or CloseHandle().
 	public native void GetEndCommands(ArrayList list);
 
+	// Elements inside the array must be freed via delete or CloseHandle().
 	public native void GetRequirements(ArrayList list);
+	
+	// Elements inside the array must be freed via delete or CloseHandle().
 	public native void GetRewards(ArrayList list);
 	
 	public native void SetState(EventState state);
@@ -66,7 +73,9 @@ methodmap Evento < Handle
 	public native StringMap GetOptions();
 };
 
+// Must be freed via delete or CloseHandle().
 native void Eventinho_FindEvento(const char[] nome, Evento &even);
+// Elements inside the array must be freed via delete or CloseHandle().
 native void Eventinho_GetAllEvents(ArrayList list);
 native Evento Eventinho_CurrentEvent();
 native bool Eventinho_StartEvent(const char[] nome, StringMap options, float countdown=0.0);

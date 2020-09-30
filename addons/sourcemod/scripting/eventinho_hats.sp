@@ -73,6 +73,7 @@ public void OnPluginStart()
 	hEventRewards = new StringMap();
 
 	RegConsoleCmd("sm_coroa", ConCommand_Coroa);
+	RegAdminCmd("sm_coroas", ConCommand_Coroas, ADMFLAG_ROOT);
 
 	hCoroaCookie = RegClientCookie("coroa_preferida_v3", "Coroa preferida.", CookieAccess_Private);
 
@@ -105,6 +106,9 @@ public void OnClientCookiesCached(int client)
 		Eventinho_FindEvento(value, event);
 
 		ArrayList rewards = CacheRewards(event, value);
+		
+		delete event;
+		
 		hPlayerRewards[client] = rewards;
 	}
 }
@@ -128,7 +132,13 @@ public void OnClientDisconnect(int client)
 {
 	DeleteItems(client);
 	delete hPlayerItems[client];
-	hPlayerRewards[client] = null;
+	
+	int len = hPlayerRewards[client].Length;
+	for(int i = 0; i < len; i++) {
+		EventReward reward = hPlayerRewards[client].Get(i);
+		delete reward;
+	}
+	delete hPlayerRewards[client];
 }
 
 stock void DeleteItems(int player)
@@ -169,28 +179,12 @@ stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] resul
 		Eventinho_FindEvento(nome, event);
 
 		ArrayList rewards = CacheRewards(event, nome);
+		
+		delete event;
+		
 		hPlayerRewards[data] = rewards;
 
 		GiveItems(data);
-	}
-}
-
-stock void DisplayCoroaMenu(int client, int item = -1)
-{
-	Handle style = GetMenuStyleHandle(MenuStyle_Default);
-	
-	Menu menu = CreateMenuEx(style, MenuHandler_Coroa, MENU_ACTIONS_DEFAULT);
-	menu.SetTitle("Coroa");
-	
-	int accid = GetSteamAccountID(client);
-
-	for(int i = 1; i < view_as<int>(EventoTipoMax); i++) {
-		if(accid == VencedoresID[i]) {
-			char nome[32];
-			Evento_Nome(view_as<EventoTipo>(i), nome, sizeof(nome));
-			
-			menu.AddItem(nome, nome, ((CoroaPreferida[client] == view_as<EventoTipo>(i)) ? ITEMDRAW_DISABLED : ITEMDRAW_DEFAULT));
-		}
 	}
 }
 
@@ -214,6 +208,9 @@ stock int MenuHandler_Coroa(Menu menu, MenuAction action, int param1, int param2
 				Eventinho_FindEvento(nome, event);
 
 				ArrayList rewards = CacheRewards(event, nome);
+				
+				delete event;
+				
 				hPlayerRewards[param1] = rewards;
 			}
 
@@ -256,6 +253,56 @@ stock void GetRewardsMenu(Database db, any data, int numQueries, DBResultSet[] r
 	menu.AddItem("remover", "remover", ITEMDRAW_DEFAULT);
 	
 	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+stock Action ConCommand_Coroas(int client, int args)
+{
+	if(client != 0) {
+		CPrintToChat(client, CHAT_PREFIX ... "Olhe no console");
+	}
+	
+	PrintToConsole(client, "===============================");
+	
+	if(hDB != null) {
+		PrintToConsole(client, "Lista de vencedores:");
+		
+		Transaction hTR = new Transaction();
+
+		char query[255];
+		hDB.Format(query, sizeof(query), "select evento, steamid from vencedores;");
+		hTR.AddQuery(query);
+
+		hDB.Execute(hTR, PrintCoroas, OnError, client);
+	} else {
+		PrintToConsole(client, "Database nao esta conectada.");
+		PrintToConsole(client, "===============================");
+	}
+	
+	return Plugin_Handled;
+}
+
+stock void PrintCoroas(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
+{
+	if(numQueries > 0) {
+		DBResultSet set = results[0];
+		if(set.HasResults) {
+			while(set.MoreRows) {
+				if(!set.FetchRow() ||
+					set.FieldCount == 0) {
+					break;
+				}
+
+				char nome[64];
+				set.FetchString(0, nome, sizeof(nome));
+
+				int steamid = set.FetchInt(1);
+
+				PrintToConsole(data, "%i - %s", steamid, nome);
+			}
+		}
+	}
+	
+	PrintToConsole(data, "===============================");
 }
 
 stock Action ConCommand_Coroa(int client, int args)
@@ -310,6 +357,8 @@ stock void GiveItems(int player)
 
 		ArrayList attributes = new ArrayList();
 		reward.GetAttributes(attributes);
+		
+		//delete reward;
 
 		int len2 = attributes.Length;
 		TF2Items_SetNumAttributes(hDummyItemView, len2);
@@ -318,9 +367,12 @@ stock void GiveItems(int player)
 
 			int index = attribute.GetID();
 			float value = attribute.GetValue();
+			
+			delete attribute;
 
 			TF2Items_SetAttribute(hDummyItemView, j, index, value);
 		}
+		
 		delete attributes;
 
 		int entity = TF2Items_GiveNamedItem(player, hDummyItemView);

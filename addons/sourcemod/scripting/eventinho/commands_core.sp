@@ -40,6 +40,7 @@ stock Action ConCommand_StartEvento(int client, int args)
 	int length = eventos.Length;
 	for(int i = 0; i < length; i++) {
 		Evento evento = eventos.Get(i);
+		
 		if(MapSupportsEvent(evento)) {
 			char nome[64];
 			evento.GetName(nome, sizeof(nome));
@@ -48,6 +49,8 @@ stock Action ConCommand_StartEvento(int client, int args)
 
 			found = true;
 		}
+		
+		delete evento;
 	}
 	menu.Display(client, MENU_TIME_FOREVER);
 	
@@ -383,6 +386,8 @@ stock void GetDefaultOptions(const char[] name, StringMap options)
 	ArrayList commands = new ArrayList();
 	event.GetStartCommands(commands);
 	
+	delete event;
+	
 	int length = commands.Length;
 	for(int i = 0; i < length; i++) {
 		EventCommand command = commands.Get(i);
@@ -392,6 +397,9 @@ stock void GetDefaultOptions(const char[] name, StringMap options)
 		
 		char value[64];
 		command.GetValue(value, sizeof(value));
+		
+		delete command;
+		
 		GetOnOrOff(value, value, sizeof(value));
 		
 		FindCommandOption(key, key, sizeof(key));
@@ -1151,6 +1159,8 @@ stock int MenuHandler_Explain(Menu menu, MenuAction action, int param1, int para
 		Eventinho_FindEvento(nome, event);
 		
 		DisplayExplainEventMenu(param1, event);
+		
+		delete event;
 	} else if(action == MenuAction_End) {
 		delete menu;
 	}
@@ -1236,6 +1246,8 @@ stock int MenuHandler_ExplainEvent(Menu menu, MenuAction action, int param1, int
 			} else if(param2 == 6) {
 				DisplayWeaponsMenu(param1, event);
 			}
+			
+			delete event;
 		}
 	} else if(action == MenuAction_End) {
 		delete menu;
@@ -1287,6 +1299,8 @@ stock void DisplayExplainMenu(int client, int item = -1)
 		
 		char nome[32];
 		evento.GetName(nome, sizeof(nome));
+		
+		delete evento;
 
 		menu.AddItem(nome, nome, ITEMDRAW_DEFAULT);
 	}

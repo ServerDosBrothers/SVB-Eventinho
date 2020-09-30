@@ -55,6 +55,8 @@ stock bool MapSupportsEvent(Evento event)
 					}
 				}
 			}
+			
+			delete requirement;
 		}
 	}
 	
@@ -88,6 +90,8 @@ stock bool TeamSupportsEvent(Evento event, const char[] team, char[] out, int le
 					break;
 				}
 			}
+			
+			delete requirement;
 		}
 	}
 	
@@ -151,6 +155,8 @@ stock bool ClassSupportsEvent(Evento event, const char[] class, char[] out, int 
 					break;
 				}
 			}
+			
+			delete requirement;
 		}
 	}
 	
