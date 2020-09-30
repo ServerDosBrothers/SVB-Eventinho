@@ -40,6 +40,7 @@ stock int Native_EventRequirement_GetValues(Handle plugin, int params)
 
 		list.PushString(value);
 	}
+	delete json;
 
 	return 1;
 }

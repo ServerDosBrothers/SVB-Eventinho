@@ -41,6 +41,7 @@ stock int Native_EventReward_GetAttributes(Handle plugin, int params)
 
 		list.Push(attribute);
 	}
+	delete json;
 
 	return 1;
 }

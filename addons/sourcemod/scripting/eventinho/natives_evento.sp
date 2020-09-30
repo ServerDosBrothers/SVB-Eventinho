@@ -53,6 +53,7 @@ stock int Native_Evento_GetStartCommands(Handle plugin, int params)
 		
 		list.Push(command);
 	}
+	delete json;
 	
 	return 1;
 }
@@ -71,6 +72,7 @@ stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 		
 		list.Push(command);
 	}
+	delete json;
 	
 	return 1;
 }
@@ -89,6 +91,7 @@ stock int Native_Evento_GetRewards(Handle plugin, int params)
 		
 		list.Push(reward);
 	}
+	delete json;
 	
 	return 1;
 }
@@ -107,6 +110,7 @@ stock int Native_Evento_GetRequirements(Handle plugin, int params)
 		
 		list.Push(requirement);
 	}
+	delete json;
 	
 	return 1;
 }
