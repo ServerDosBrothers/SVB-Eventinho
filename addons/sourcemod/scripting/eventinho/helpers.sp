@@ -35,10 +35,14 @@ stock bool MapSupportsEvent(Evento event)
 			EventRequirement requirement = requirements.Get(i);
 			EventRequirementType type = requirement.GetType();
 
+			ArrayList values = null;
 			if(type == ReqBlacklistMaps || type == ReqWhitelistMaps) {
-				ArrayList values = new ArrayList(64);
+				values = new ArrayList(64);
 				requirement.GetValues(values);
+			}
+			delete requirement;
 
+			if(values) {
 				bool found = FindStrInArray(values, map);
 
 				delete values;
@@ -55,8 +59,6 @@ stock bool MapSupportsEvent(Evento event)
 					}
 				}
 			}
-			
-			delete requirement;
 		}
 	}
 	
@@ -65,37 +67,33 @@ stock bool MapSupportsEvent(Evento event)
 	return supports;
 }
 
-stock bool TeamSupportsEvent(Evento event, const char[] team, char[] out, int len)
+stock bool TeamSupportsEvent(ArrayList requirements, const char[] team, char[] out, int len)
 {
 	bool supports = true;
 	
-	ArrayList requirements = new ArrayList();
-	event.GetRequirements(requirements);
 	int length = requirements.Length;
-	if(length > 0) {
-		for(int i = 0; i < length; i++) {
-			EventRequirement requirement = requirements.Get(i);
-			EventRequirementType type = requirement.GetType();
+	for(int i = 0; i < length; i++) {
+		EventRequirement requirement = requirements.Get(i);
+		EventRequirementType type = requirement.GetType();
 
-			if(type == ReqPlayerTeam) {
-				ArrayList values = new ArrayList(64);
-				requirement.GetValues(values);
+		ArrayList values = null;
+		if(type == ReqPlayerTeam) {
+			values = new ArrayList(64);
+			requirement.GetValues(values);
+		}
+		//delete requirement;
 
-				bool found = FindStrInArrayEx(values, team, out, len);
+		if(values) {
+			bool found = FindStrInArrayEx(values, team, out, len);
 
-				delete values;
+			delete values;
 
-				if(!found) {
-					supports = false;
-					break;
-				}
+			if(!found) {
+				supports = false;
+				break;
 			}
-			
-			delete requirement;
 		}
 	}
-	
-	delete requirements;
 	
 	return supports;
 }
@@ -109,25 +107,38 @@ stock bool TeamSupportsEventEx(Evento event, int team, char[] out, int len)
 	char name[32];
 	GetTeamName(team, name, sizeof(name));
 
-	if(TeamSupportsEvent(event, name, out, len)) {
-		return true;
+	ArrayList requirements = new ArrayList();
+	event.GetRequirements(requirements);
+	
+	bool supports = false;
+
+	if(TeamSupportsEvent(requirements, name, out, len)) {
+		supports = true;
+	} else {
+		if(team == 2) {
+			supports = (TeamSupportsEvent(requirements, "red", out, len) ||
+					TeamSupportsEvent(requirements, "2", out, len));
+		} else if(team == 3) {
+			supports = (TeamSupportsEvent(requirements, "blu", out, len) ||
+					TeamSupportsEvent(requirements, "blue", out, len) ||
+					TeamSupportsEvent(requirements, "3", out, len));
+		} else if(team == 1) {
+			supports = (TeamSupportsEvent(requirements, "spectate", out, len) ||
+					TeamSupportsEvent(requirements, "spec", out, len) ||
+					TeamSupportsEvent(requirements, "spectator", out, len) ||
+					TeamSupportsEvent(requirements, "1", out, len));
+		}
+	}
+	
+	int length = requirements.Length;
+	for(int i = 0; i < length; i++) {
+		EventRequirement requirement = requirements.Get(i);
+		delete requirement;
 	}
 
-	if(team == 2) {
-		return TeamSupportsEvent(event, "red", out, len) ||
-				TeamSupportsEvent(event, "2", out, len);
-	} else if(team == 3) {
-		return TeamSupportsEvent(event, "blu", out, len) ||
-				TeamSupportsEvent(event, "blue", out, len) ||
-				TeamSupportsEvent(event, "3", out, len);
-	} else if(team == 1) {
-		return TeamSupportsEvent(event, "spectate", out, len) ||
-				TeamSupportsEvent(event, "spec", out, len) ||
-				TeamSupportsEvent(event, "spectator", out, len) ||
-				TeamSupportsEvent(event, "1", out, len);
-	}
+	delete requirements;
 
-	return false;
+	return supports;
 }
 
 stock bool ClassSupportsEvent(Evento event, const char[] class, char[] out, int len)
@@ -141,11 +152,15 @@ stock bool ClassSupportsEvent(Evento event, const char[] class, char[] out, int 
 		for(int i = 0; i < length; i++) {
 			EventRequirement requirement = requirements.Get(i);
 			EventRequirementType type = requirement.GetType();
-
+			
+			ArrayList values = null;
 			if(type == ReqPlayerClass) {
-				ArrayList values = new ArrayList(64);
+				values = new ArrayList(64);
 				requirement.GetValues(values);
+			}
+			delete requirement;
 
+			if(values) {
 				bool found = FindStrInArrayEx(values, class, out, len);
 
 				delete values;
@@ -155,8 +170,6 @@ stock bool ClassSupportsEvent(Evento event, const char[] class, char[] out, int 
 					break;
 				}
 			}
-			
-			delete requirement;
 		}
 	}
 	

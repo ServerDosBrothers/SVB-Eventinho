@@ -1,38 +1,71 @@
 #include <sourcemod>
 #include <morecolors>
-#include <ripext>
 #include <teammanager>
 #include <tf2>
 #include <tf2_stocks>
 #include <sdkhooks>
+
+#define __USE_REST_EXT
+//#define __USE_SYSTEM2
+//#define __USE_SMJANSSON
+
+#if defined __USE_SYSTEM2 && !defined __USE_SMJANSSON
+	#define __USE_SMJANSSON
+#endif
+
+#if defined __USE_SYSTEM2 && !defined __USE_SMJANSSON
+	#error
+#endif
+
+#if defined __USE_REST_EXT && (defined __USE_SYSTEM2 || defined __USE_SMJANSSON)
+	#error
+#endif
+
+#if defined __USE_REST_EXT
+	#include <ripext>
+#elseif defined __USE_SYSTEM2
+	#include <system2>
+#endif
+
+#if defined __USE_SMJANSSON
+	#include <smjansson>
+#endif
 
 #pragma semicolon 1
 #pragma newdecls required
 
 #include <eventinho>
 
-#include <eventinho/globals_core.sp>
+#include "eventinho/smjansson_rest_interlop.sp"
 
-#include <eventinho/helpers.sp>
+#include "eventinho/globals_core.sp"
 
-#include <eventinho/forwards_core.sp>
-#include <eventinho/commands_core.sp>
-#include <eventinho/natives_core.sp>
+#include "eventinho/helpers.sp"
 
-#include <eventinho/globals_evento.sp>
-#include <eventinho/commands_evento.sp>
-#include <eventinho/natives_evento.sp>
+#include "eventinho/forwards_core.sp"
+#include "eventinho/commands_core.sp"
+#include "eventinho/natives_core.sp"
 
-#include <eventinho/natives_event_reward.sp>
-#include <eventinho/natives_event_reward_attribute.sp>
-#include <eventinho/natives_event_requirement.sp>
-#include <eventinho/natives_event_command.sp>
+#include "eventinho/globals_evento.sp"
+#include "eventinho/commands_evento.sp"
+#include "eventinho/natives_evento.sp"
+
+#include "eventinho/natives_event_reward.sp"
+#include "eventinho/natives_event_reward_attribute.sp"
+#include "eventinho/natives_event_requirement.sp"
+#include "eventinho/natives_event_command.sp"
 
 public Plugin myinfo =
 {
 	name = "eventinho",
 	author = "Arthurdead/Mathx",
-	description = "Plugin para ajudar staff nos eventos.",
+#if defined __USE_REST_EXT
+	description = "Plugin para ajudar staff nos eventos. --- REST EXT",
+#elseif defined __USE_SYSTEM2
+	#if defined __USE_SMJANSSON
+	description = "Plugin para ajudar staff nos eventos. --- System2 - SMJansson",
+	#endif
+#endif
 	version = "",
 	url = ""
 };

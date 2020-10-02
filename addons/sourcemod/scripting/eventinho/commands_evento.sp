@@ -36,9 +36,7 @@ stock Action ConCommand_ListaEventos(int client, int args)
 
 stock Action ConCommand_ReloadEventos(int client, int args)
 {
-	jsonEventos = null;
-	
-	hApiClient.Get("/eventos", RestEventos);
+	Evento_Init();
 	
 	return Plugin_Handled;
 }

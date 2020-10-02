@@ -501,9 +501,7 @@ stock Action ConCommand_ReloadAreas(int client, int args)
 {
 	RemoveAllDoors();
 	
-	if(kvEventinhoAreas) {
-		delete kvEventinhoAreas;
-	}
+	delete kvEventinhoAreas;
 	kvEventinhoAreas = new KeyValues("eventinho_areas");
 	
 	char filepath[64];
