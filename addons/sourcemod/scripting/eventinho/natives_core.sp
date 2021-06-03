@@ -439,28 +439,37 @@ stock int Native_Eventinho_Participate(Handle plugin, int params)
 
 		g_tmpConvidarPlayer[client] = -1;
 	} else {
-		PlayerSprite[client] = CreateEntityByName("env_sprite_oriented");
-		DispatchKeyValue(PlayerSprite[client], "framerate", "10.0");
-		DispatchKeyValue(PlayerSprite[client], "scale", "");
-		DispatchKeyValue(PlayerSprite[client], "model", "materials/sprites/minimap_icons/voiceicon.vmt");
-		//DispatchKeyValue(PlayerSprite[client], "model", "materials/sprites/obj_icons/icon_obj_e.vmt");
-		DispatchKeyValue(PlayerSprite[client], "spawnflags", "1");
-		DispatchKeyValueFloat(PlayerSprite[client], "GlowProxySize", 2.0);
-		DispatchKeyValueFloat(PlayerSprite[client], "HDRColorScale", 1.0);
-		DispatchSpawn(PlayerSprite[client]);
-		ActivateEntity(PlayerSprite[client]);
-		
-		AcceptEntityInput(PlayerSprite[client], "ShowSprite");
-		
-		SetEntityRenderColor(PlayerSprite[client], 255, 0, 0, 255);
-		
-		//SetVariantString("!activator");
-		//AcceptEntityInput(PlayerSprite[client], "SetParent", client);
-		
-		//SetVariantString("head");
-		//AcceptEntityInput(PlayerSprite[client], "SetParentAttachment");
-		
-		SDKHook(PlayerSprite[client], SDKHook_SetTransmit, SetTransmit);
+		bool iconeon = true;
+
+		char tmpvalue[5];
+		if(hTmpOptions.GetString("Icone", tmpvalue, sizeof(tmpvalue))) {
+			iconeon = StrEqual(tmpvalue, "ON");
+		}
+
+		if(iconeon) {
+			PlayerSprite[client] = CreateEntityByName("env_sprite_oriented");
+			DispatchKeyValue(PlayerSprite[client], "framerate", "10.0");
+			DispatchKeyValue(PlayerSprite[client], "scale", "");
+			DispatchKeyValue(PlayerSprite[client], "model", "materials/sprites/minimap_icons/voiceicon.vmt");
+			//DispatchKeyValue(PlayerSprite[client], "model", "materials/sprites/obj_icons/icon_obj_e.vmt");
+			DispatchKeyValue(PlayerSprite[client], "spawnflags", "1");
+			DispatchKeyValueFloat(PlayerSprite[client], "GlowProxySize", 2.0);
+			DispatchKeyValueFloat(PlayerSprite[client], "HDRColorScale", 1.0);
+			DispatchSpawn(PlayerSprite[client]);
+			ActivateEntity(PlayerSprite[client]);
+			
+			AcceptEntityInput(PlayerSprite[client], "ShowSprite");
+			
+			SetEntityRenderColor(PlayerSprite[client], 255, 0, 0, 255);
+			
+			//SetVariantString("!activator");
+			//AcceptEntityInput(PlayerSprite[client], "SetParent", client);
+			
+			//SetVariantString("head");
+			//AcceptEntityInput(PlayerSprite[client], "SetParentAttachment");
+			
+			SDKHook(PlayerSprite[client], SDKHook_SetTransmit, SetTransmit);
+		}
 	}
 
 	Call_StartForward(hOnPlayerParticipating);

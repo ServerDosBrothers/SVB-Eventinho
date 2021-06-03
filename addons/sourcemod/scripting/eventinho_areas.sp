@@ -9,7 +9,8 @@
 #pragma newdecls required
 
 #include <eventinho>
-#include <eventinho/helpers.sp>
+
+#include "eventinho/helpers.sp"
 
 public Plugin myinfo =
 {
@@ -28,6 +29,7 @@ char szLastArea[64];
 float g_RedTeleport[3] = {0.0, ...};
 float g_BlueTeleport[3] = {0.0, ...};
 bool g_bTeleported[MAXPLAYERS+1] = {false, ...};
+bool g_bGoded[MAXPLAYERS+1] = {false,...};
 bool g_bManualTeleportRed = false;
 bool g_bManualTeleportBlue = false;
 int g_TmpAdmin = -1;
@@ -55,6 +57,8 @@ public void OnPluginStart()
 public void Eventinho_ModifyDefaultOptions(const char[] name, StringMap options)
 {
 	options.SetString("Teleport", "ON");
+
+	options.SetString("GOD", "OFF");
 
 	if(iAreasMapKVID != -1) {
 		//options.SetString("Area", "test");
@@ -129,6 +133,16 @@ public bool Eventinho_HandleMenuOption(int client, const char[] event, StringMap
 
 		Eventinho_ReDisplayOptionsMenu(client, event, options);
 		return true;
+	} else if(StrEqual(name, "GOD")) {
+		if(StrEqual(value, "ON")) {
+			strcopy(value, length, "OFF");
+		} else if(StrEqual(value, "OFF")) {
+			strcopy(value, length, "ON");
+		}
+		options.SetString("GOD", value);
+
+		Eventinho_ReDisplayOptionsMenu(client, event, options);
+		return true;
 	}
 	
 	return false;
@@ -137,6 +151,7 @@ public bool Eventinho_HandleMenuOption(int client, const char[] event, StringMap
 public void OnClientDisconnect(int player)
 {
 	g_bTeleported[player] = false;
+	g_bGoded[player] = false;
 	if(player == g_TmpAdmin) {
 		g_TmpAdmin = -1;
 	}
@@ -159,24 +174,17 @@ public void Eventinho_OnEventStateChanged(Evento event)
 			if(g_bTeleported[i]) {
 				TF2_RespawnPlayer(i);
 			}
+			if(g_bGoded[i]) {
+				int userid = GetClientUserId(i);
+				ServerCommand("sm_mortal #%i", userid);
+			}
+			g_bGoded[i] = false;
 			g_bTeleported[i] = false;
 		}
 
 		RemoveAllDoors();
 		g_RedTeleport = NULL_VECTOR;
 		g_BlueTeleport = NULL_VECTOR;
-
-		//poe isso em outro lugar
-		char nome[64];
-		event.GetName(nome, sizeof(nome));
-
-		if(StrEqual(nome, "Battle Royale")) {
-			for(int i = 1; i <= MaxClients; i++) {
-				if(IsClientInGame(i) && !IsFakeClient(i)) {
-					TeamManager_SetPlayerFF(i, false);
-				}
-			}
-		}
 	}
 }
 
@@ -207,19 +215,15 @@ public void Eventinho_OnPlayerParticipating(int client, Evento event, bool is)
 		if(g_bTeleported[client]) {
 			TF2_RespawnPlayer(client);
 		}
+		if(g_bGoded[client]) {
+			int userid = GetClientUserId(client);
+			ServerCommand("sm_mortal #%i", userid);
+		}
+		g_bGoded[client] = false;
 		g_bTeleported[client] = false;
 	} else {
 		if(event.GetState() == EventInProgress) {
 			Teleport_Player(client, true, nome);
-		}
-	}
-
-	//poe isso em outro lugar
-	if(IsClientInGame(client) && !IsFakeClient(client)) {
-		if(!is) {
-			if(StrEqual(nome, "Battle Royale")) {
-				TeamManager_SetPlayerFF(client, false);
-			}
 		}
 	}
 }
@@ -309,6 +313,9 @@ public void Eventinho_OnEventStarted(Evento event, StringMap options, int admin)
 	char nome[64];
 	event.GetName(nome, sizeof(nome));
 
+	options.GetString("GOD", tele, sizeof(tele));
+	bool godon = StrEqual(tele, "ON");
+
 	for(int i = 1; i <= MaxClients; i++) {
 		if(Eventinho_IsParticipating(i)) {
 			int class = view_as<int>(TF2_GetPlayerClass(i));
@@ -332,23 +339,20 @@ public void Eventinho_OnEventStarted(Evento event, StringMap options, int admin)
 				}
 			}
 
+			int userid = GetClientUserId(i);
+			if(godon) {
+				ServerCommand("sm_god #%i", userid);
+				g_bGoded[i] = true;
+			} else {
+				ServerCommand("sm_mortal #%i", userid);
+			}
+
 			DataPack data = new DataPack();
 			data.WriteCell(i);
 			data.WriteString(nome);
 			RequestFrame(FrameTeleport, data);
 		}
 	}
-
-	//poe isso em outro lugar
-	/*if(StrEqual(nome, "Battle Royale")) {
-		for(int i = 1; i <= MaxClients; i++) {
-			if(IsClientInGame(i) && !IsFakeClient(i)) {
-				if(Eventinho_IsParticipating(i)) {
-					TeamManager_SetPlayerFF(i, true);
-				}
-			}
-		}
-	}*/
 
 	g_TmpAdmin = -1;
 }

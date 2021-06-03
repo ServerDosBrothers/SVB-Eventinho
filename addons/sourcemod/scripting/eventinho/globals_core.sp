@@ -16,13 +16,17 @@ ArrayList g_Time[MAXPLAYERS+1] = {null, ...};
 int g_TimeEntrado[MAXPLAYERS+1] = {-1, ...};
 int g_TmpAdmin = -1;
 int g_tmpConvidarPlayer[MAXPLAYERS+1] = {-1, ...};
+#if defined __USING_API
 ConVar API_URL = null;
 ConVar API_KEY = null;
+#endif
 
 stock void Core_Init()
 {
+#if defined __USING_API
 	API_URL = CreateConVar("sm_eventinho_api", "http://api.svdosbrothers.com/v1/eventinho");
 	API_KEY = CreateConVar("sm_eventinho_key", "teste");
+#endif
 
 	hOptionsMap = new StringMap();
 	hOptionsMap.SetString("tf_weapon_criticals", "Crits");
@@ -107,15 +111,16 @@ stock void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 	if(!(flags & TF_DEATHFLAG_DEADRINGER)) {
 		Evento evento = Eventinho_CurrentEvent();
 		if(evento && evento.GetState() == EventInProgress) {
-			char nome[64];
-			evento.GetName(nome, sizeof(nome));
+			bool respawnon = false;
 
-			if(StrEqual(name, "Color Wars") ||
-				StrEqual(name, "Only One")) {
-				return;
+			char tmpvalue[5];
+			if(hTmpOptions.GetString("Respawn", tmpvalue, sizeof(tmpvalue))) {
+				respawnon = StrEqual(tmpvalue, "ON");
 			}
 
-			Eventinho_Participate(player, false);
+			if(!respawnon) {
+				Eventinho_Participate(player, false);
+			}
 		}
 	}
 }

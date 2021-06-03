@@ -1,7 +1,7 @@
 stock void Register_Evento_Commands()
 {
-	RegAdminCmd("sm_reloadeventos", ConCommand_ReloadEventos, ADMFLAG_ROOT);
-	RegAdminCmd("sm_listaeventos", ConCommand_ListaEventos, ADMFLAG_ROOT);
+	RegAdminCmd("sm_revents", ConCommand_ReloadEventos, ADMFLAG_ROOT);
+	RegAdminCmd("sm_levents", ConCommand_ListaEventos, ADMFLAG_ROOT);
 }
 
 stock Action ConCommand_ListaEventos(int client, int args)

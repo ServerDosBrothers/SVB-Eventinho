@@ -1,0 +1,211 @@
+"Eventos"
+{
+	//antes de tudo o formato da valve e chato
+	//comentario multilinha (/* */) n funciona
+	//tudo tem q ta em aspas
+	//qualquer coisa precisa de ter brace ({}) ou um valor
+	//eo brace n pode ser na mesma linha
+	//
+	//"lol" {} n funciona
+	//
+	//"lol"
+	//{
+	//	"test1" //n funciona
+	//}
+	//
+	//"lol"
+	//{
+	//	"0" "test1" //funciona
+	//}
+	//
+	//se vc ver alguma coisa no exemplo que começa com "0"
+	//e pq o 1 valor (o "0" em si) n importa ele so tem q ser unico
+	//pq o formato da valve e um lixo
+	//
+
+	//formato:
+	//"nome do evento"
+	//{
+	//	//texto do !explain quebra linha com \n pro menu n fica gigante
+	//	"explain" "penispenispenis"
+	//
+	//	//requerimentos do evento
+	//	"requirements"
+	//	{
+	//		"0"
+	//		{
+	//			//tipo do requerimento: class, map, weapon
+	//			"type" "class"
+	//			//modo do requerimento: blacklist todos valores sao excludios, whitelist todos valores NAO listados sao excluidos
+	//			"mode" "whitelist"
+	//			//valores do requerimento
+	//			"values"
+	//			{
+	//				"0" "penis"
+	//				etc....
+	//			}
+	//		}
+	//	}
+	//
+	//	//força trocar de time se n quiser força n poe a opçao
+	//	"team" "red" ou "blue"
+	//
+	//	//mostra o icone na cabeça
+	//	"icon" "on" ou "off"
+	//
+	//	//se isso tiver "on" a pessoa n sai do evento qnd morre
+	//	"respawn" "on" ou "off"
+	//
+	//	//se os criticos ficam ligado ou n
+	//	"crits" "on" ou "off"
+	//
+	//	//que items a pessoa ganha
+	//	"reward_items"
+	//	{
+	//		"3157" //id do item
+	//		{
+	//			//modelo do item
+	//			"model" "models/error.mdl"
+	//			
+	//			"attributes"
+	//			{
+	//				//o 1 valor eo id do attributo
+	//				//o 2 valor eo valor do attributo (tem que ser em float)
+	//				"125" "6.0"
+	//				"567" "7.0"
+	//			}
+	//		}
+	//	}
+	//	lista de id de item: https://wiki.alliedmods.net/Team_Fortress_2_Item_Definition_Indexes
+	//	lista de id de attributo: https://deathreus.github.io/items/attributes.html
+	//	lista de id de unusual: n tem lol
+	//
+	//	//isso e coisa q vc ganha que tem q se programado em um plugin
+	//	//exemplo em baixo
+	//	"reward_misc"
+	//	{
+	//		//algum plugin vai ver que o player tem "chuva de piroca" como recompensa
+	//		//e vai fazer uma logica especifica do plugin
+	//		"0" "chuva de piroca"
+	//	}
+	//
+	//	//commandos para executar qnd o evento começar
+	//	"cmd_start"
+	//	{
+	//		"sm_mortal" "@evento"
+	//		etc....
+	//	}
+	//
+	//	//commandos para executar qnd o evento terminar
+	//	"cmd_end"
+	//	{
+	//		"sm_mortal" "@evento"
+	//		etc....
+	//	}
+	//}
+	//
+
+	//isso aplica a todos os eventos
+	"##default##"
+	{
+		"icon" "on"
+		"respawn" "off"
+		"crits" "off"
+	}
+
+	"Battle Royale"
+	{
+	}
+
+	"Dispenser"
+	{
+	}
+
+	"Nuke"
+	{
+	}
+
+	"Spycrab"
+	{
+	}
+
+	"Boxing"
+	{
+	}
+
+	"Piscina Mortal"
+	{
+	}
+
+	"Esconde-esconde"
+	{
+	}
+
+	"Hoovy Race"
+	{
+	}
+
+	"Dodgeball"
+	{
+	}
+
+	"Pega-Pega"
+	{
+	}
+
+	"Pedra, Papel e Tesoura"
+	{
+	}
+
+	"Parkour"
+	{
+	}
+
+	"Sniper Fight"
+	{
+	}
+
+	"Color Wars"
+	{
+	}
+
+	"MGE"
+	{
+	}
+
+	"Hat Fortress"
+	{
+	}
+
+	"Plague Inc"
+	{
+	}
+
+	"Teste"
+	{
+	}
+
+	"Golfe"
+	{
+	}
+
+	"Caça ao pombo"
+	{
+	}
+
+	"Corzinha"
+	{
+	}
+
+	"Roleta Russa"
+	{
+	}
+
+	"Pega a Dispenser!"
+	{
+	}
+
+	"Caçada invisível"
+	{
+	}
+}

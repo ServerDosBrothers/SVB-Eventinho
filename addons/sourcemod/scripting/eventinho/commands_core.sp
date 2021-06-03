@@ -1,14 +1,13 @@
 stock void Register_Core_Commands()
 {
-	RegAdminCmd("sm_startevento", ConCommand_StartEvento, ADMFLAG_ROOT);
-	RegAdminCmd("sm_endevento", ConCommand_EndEvento, ADMFLAG_ROOT);
-	RegAdminCmd("sm_cancelevento", ConCommand_CancelEvento, ADMFLAG_ROOT);
+	RegAdminCmd("sm_sevent", ConCommand_StartEvento, ADMFLAG_ROOT);
+	RegAdminCmd("sm_eevent", ConCommand_EndEvento, ADMFLAG_ROOT);
+	RegAdminCmd("sm_cevent", ConCommand_CancelEvento, ADMFLAG_ROOT);
 	RegAdminCmd("sm_split", ConCommand_Split, ADMFLAG_ROOT);
-	RegAdminCmd("sm_forceevento", ConCommand_ForcarEvento, ADMFLAG_ROOT);
-	RegAdminCmd("sm_forcetime", ConCommand_ForcarTime, ADMFLAG_ROOT);
+	RegAdminCmd("sm_fevento", ConCommand_ForcarEvento, ADMFLAG_ROOT);
+	RegAdminCmd("sm_ftime", ConCommand_ForcarTime, ADMFLAG_ROOT);
 	
-	RegConsoleCmd("sm_participantes", ConCommand_Participantes);
-	RegConsoleCmd("sm_participando", ConCommand_Participando);
+	RegConsoleCmd("sm_ewho", ConCommand_Participando);
 	RegConsoleCmd("sm_explain", ConCommand_Explain);
 	RegConsoleCmd("sm_evento", ConCommand_Evento);
 	RegConsoleCmd("sm_time", ConCommand_Time);
@@ -74,6 +73,65 @@ stock Action ConCommand_CancelEvento(int client, int args)
 	}
 	
 	Eventinho_CancelEvent();
+	
+	return Plugin_Handled;
+}
+
+stock Action ConCommand_Participando(int client, int args)
+{
+	Evento evento = Eventinho_CurrentEvent();
+	
+	if(!evento) {
+		CPrintToChat(client, CHAT_PREFIX ... "Não há nenhum evento em andamento.");
+		return Plugin_Handled;
+	}
+
+	char nome[64];
+	evento.GetName(nome, sizeof(nome));
+
+	if(args > 0) {
+		for(int i = 1; i <= args; i++) {
+			char filter[32];
+			GetCmdArg(i, filter, sizeof(filter));
+
+			char name[MAX_TARGET_LENGTH];
+			int targets[MAXPLAYERS];
+			bool isml = false;
+			int count = ProcessTargetString(filter, client, targets, MAXPLAYERS, COMMAND_FILTER_ALIVE|COMMAND_FILTER_NO_IMMUNITY, name, sizeof(name), isml);
+			if(count == 0) {
+				ReplyToCommand(client, "[Evento] arg%i (%s) não processado.", i, filter);
+				continue;
+			}
+			
+			for(int j = 0; j <= count; j++) {
+				int target = targets[j];
+				if(target == 0) {
+					continue;
+				}
+				
+				if(Eventinho_IsParticipating(target)) {
+					ReplyToCommand(client, "[Evento] %N não esta participando do %s", target, nome);
+				} else {
+					ReplyToCommand(client, "[Evento] %N esta participando do %s", target, nome);
+				}
+			}
+		}
+	} else {
+		int num = 0;
+
+		PrintToConsole(client, "===============================");
+		PrintToConsole(client, "Lista de participantes do %s:", nome);
+		
+		for(int i = 1; i <= MaxClients; i++) {
+			if(Eventinho_IsParticipating(i)) {
+				PrintToConsole(client, "%N", i);
+				++num;
+			}
+		}
+		
+		PrintToConsole(client, "Em total ha %i participantes", num);
+		PrintToConsole(client, "===============================");
+	}
 	
 	return Plugin_Handled;
 }
@@ -156,10 +214,6 @@ stock Action ConCommand_EndEvento(int client, int args)
 					if(errors) {
 						continue;
 					}
-
-					CPrintToChatAll(CHAT_PREFIX ... "O Time de %N ganhou o %s", target, nome);
-				} else {
-					CPrintToChatAll(CHAT_PREFIX ... "%N Ganhou o %s", target, nome);
 				}
 				
 				winners.Push(target);
@@ -174,9 +228,17 @@ stock Action ConCommand_EndEvento(int client, int args)
 	}
 	
 	if(!errors) {
+		int len = winners.Length;
+		if(len == 1) {
+			int target = winners.Get(0);
+			CPrintToChatAll(CHAT_PREFIX ... "%N Ganhou o %s.", target, nome);
+		} else {
+			CPrintToChatAll(CHAT_PREFIX ... "%s teve %i vençedores.", nome, len);
+		}
+
 		Eventinho_EndEvent(winners, 0.0);
 	} else if(client != 0) {
-		CPrintToChat(client, CHAT_PREFIX ... "Aconteceram ERRORS, por favor olhe o console para mais informações");
+		CPrintToChat(client, CHAT_PREFIX ... "Aconteceram ERRORS, por favor olhe o console para mais informações.");
 	}
 	
 	delete winners;
@@ -379,7 +441,9 @@ stock void GetDefaultOptions(const char[] name, StringMap options)
 {
 	g_tmpStartCountdown = 10.0;
 	options.SetString("Preparaçao", "10 segundos");
-	
+	options.SetString("Icone", "ON");
+	options.SetString("Respawn", "OFF");
+
 	Evento event = null;
 	Eventinho_FindEvento(name, event);
 	
@@ -436,85 +500,22 @@ stock int MenuHandler_Evento(Menu menu, MenuAction action, int param1, int param
 	return 0;
 }
 
-stock Action ConCommand_Participantes(int client, int args)
-{
-	Evento evento = Eventinho_CurrentEvent();
-	
-	if(!evento) {
-		CReplyToCommand(client, CHAT_PREFIX ... "Não há nenhum evento em andamento.");
-		return Plugin_Handled;
-	}
-
-	if(client != 0) {
-		CPrintToChat(client, CHAT_PREFIX ... "Olhe no console");
-	}
-
-	char nome[64];
-	evento.GetName(nome, sizeof(nome));
-	
-	PrintToConsole(client, "===============================");
-	PrintToConsole(client, "Lista de participantes do %s:", nome);
-	
-	for(int i = 1; i <= MaxClients; i++) {
-		if(Eventinho_IsParticipating(i)) {
-			PrintToConsole(client, "%N", i);
-		}
-	}
-	
-	PrintToConsole(client, "===============================");
-	
-	return Plugin_Handled;
-}
-
 stock Action ConCommand_Split(int client, int args)
 {
 	int count = 1;
 	for(int i = 1; i <= MaxClients; i++) {
 		if(Eventinho_IsParticipating(i)) {
+		#if !defined __DISABLE_TEAMMANAGER
 			if(count % 2 == 0) {
 				TeamManager_SetEntityTeam(i, 2, false);
 			} else if(count % 2 == 1) {
 				TeamManager_SetEntityTeam(i, 3, false);
 			}
+		#endif
 			count++;
 		}
 	}
 
-	return Plugin_Handled;
-}
-
-stock Action ConCommand_Participando(int client, int args)
-{
-	if(args < 1) {
-		CPrintToChat(client, CHAT_PREFIX ... "Usagem: sm_participando <player>");
-		return Plugin_Handled;
-	}
-
-	Evento evento = Eventinho_CurrentEvent();
-	
-	if(!evento) {
-		CPrintToChat(client, CHAT_PREFIX ... "Não há nenhum evento em andamento.");
-		return Plugin_Handled;
-	}
-
-	char nome[64];
-	evento.GetName(nome, sizeof(nome));
-
-	char arg1[32];
-	GetCmdArg(1, arg1, sizeof(arg1));
-
-	int target = FindTarget(client, arg1, false, false);
-	if(target == -1) {
-		CPrintToChat(client, CHAT_PREFIX ... "Jogador não encontrado.");
-		return Plugin_Handled;
-	}
-	
-	if(Eventinho_IsParticipating(target)) {
-		CPrintToChat(client, CHAT_PREFIX ... "%N esta participando do %s.", target, nome);
-	} else {
-		CPrintToChat(client, CHAT_PREFIX ... "%N não esta participando do %s.", target, nome);
-	}
-	
 	return Plugin_Handled;
 }
 
@@ -1089,10 +1090,11 @@ stock Action ConCommand_Evento(int client, int args)
 	Eventinho_Participate(client, !Eventinho_IsParticipating(client));
 	
 	if(Eventinho_IsParticipating(client)) {
-		CReplyToCommand(client, CHAT_PREFIX ... "Agora você é um participante do %s", nome);
+		CReplyToCommand(client, CHAT_PREFIX ... "Agora você é um participante do %s, Digite !explain para saber como jogar!", nome);
 		CPrintToChatAll(CHAT_PREFIX ... "%N esta participando do %s. Digite !evento para participar tambem!", client, nome);
+		DisplayExplainEventMenu(client, evento);
 	} else {
-		CReplyToCommand(client, CHAT_PREFIX ... "Agora você não é mais um participante do %s", nome);
+		CReplyToCommand(client, CHAT_PREFIX ... "Agora você não é mais um participante do %s.", nome);
 	}
 	
 	return Plugin_Handled;

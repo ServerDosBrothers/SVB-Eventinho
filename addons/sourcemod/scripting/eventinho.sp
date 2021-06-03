@@ -1,6 +1,5 @@
 #include <sourcemod>
 #include <morecolors>
-#include <teammanager>
 #include <tf2>
 #include <tf2_stocks>
 #include <sdkhooks>
@@ -8,6 +7,11 @@
 #define __USE_REST_EXT
 //#define __USE_SYSTEM2
 //#define __USE_SMJANSSON
+//#define __USE_KEYVALUES
+
+#define __OLD_REST_EXT
+
+//#define __DISABLE_TEAMMANAGER
 
 #if defined __USE_SYSTEM2 && !defined __USE_SMJANSSON
 	#define __USE_SMJANSSON
@@ -21,6 +25,14 @@
 	#error
 #endif
 
+#if defined __USE_KEYVALUES && (defined __USE_REST_EXT || defined __USE_SYSTEM2 || defined __USE_SMJANSSON)
+	#error
+#endif
+
+#if defined __USE_SYSTEM2 || defined __USE_REST_EXT
+	#define __USING_API
+#endif
+
 #if defined __USE_REST_EXT
 	#include <ripext>
 #elseif defined __USE_SYSTEM2
@@ -31,12 +43,16 @@
 	#include <smjansson>
 #endif
 
+#if !defined __DISABLE_TEAMMANAGER
+	#include <teammanager>
+#endif
+
 #pragma semicolon 1
 #pragma newdecls required
 
 #include <eventinho>
 
-#include "eventinho/smjansson_rest_interlop.sp"
+#include "eventinho/backend_interlop.sp"
 
 #include "eventinho/globals_core.sp"
 
@@ -64,7 +80,11 @@ public Plugin myinfo =
 #elseif defined __USE_SYSTEM2
 	#if defined __USE_SMJANSSON
 	description = "Plugin para ajudar staff nos eventos. --- System2 - SMJansson",
+	#else
+		#error
 	#endif
+#elseif defined __USE_KEYVALUES
+	description = "Plugin para ajudar staff nos eventos. --- KeyValues",
 #endif
 	version = "",
 	url = ""

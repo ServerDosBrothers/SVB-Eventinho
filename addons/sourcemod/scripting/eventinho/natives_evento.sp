@@ -14,13 +14,25 @@ stock void Register_Evento_Natives()
 stock int Native_Evento_GetName(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
-	JSONObject evento_json = view_as<JSONObject>(evento);
-	
+
 	int len = GetNativeCell(3);
 	char[] nome = new char[len];
+
+#if defined __USING_API
+	JSONObject evento_json = view_as<JSONObject>(evento);
 	
 	evento_json.GetString("nome", nome, len);
-	
+#elseif defined __USE_KEYVALUES
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		kvEventos.GetSectionName(nome, len);
+		kvEventos.GoBack();
+	}
+#endif
+
 	SetNativeString(2, nome, len);
 	return 1;
 }
@@ -28,24 +40,67 @@ stock int Native_Evento_GetName(Handle plugin, int params)
 stock int Native_Evento_GetDescription(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
-	JSONObject evento_json = view_as<JSONObject>(evento);
-	
+
 	int len = GetNativeCell(3);
 	char[] nome = new char[len];
+
+#if defined __USING_API
+	JSONObject evento_json = view_as<JSONObject>(evento);
 	
 	evento_json.GetString("descricao", nome, len);
+#elseif defined __USE_KEYVALUES
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		kvEventos.GetString("explain", nome, len);
+		kvEventos.GoBack();
+	} else if(kvEventos.JumpToKeySymbol(defaultid)) {
+		kvEventos.GetString("explain", nome, len);
+		kvEventos.GoBack();
+	}
+#endif
 	
 	SetNativeString(2, nome, len);
 	return 1;
 }
 
+#if defined __USE_KEYVALUES
+stock void HandleStartCommands(ArrayList list)
+{
+	if(kvEventos.JumpToKey("cmd_start")) {
+		if(kvEventos.GotoFirstSubKey()) {
+			char tmpname[64];
+			char tmpvalue[64];
+			do {
+				kvEventos.GetSectionName(tmpname, sizeof(tmpname));
+				kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
+
+				DataPack tmp = new DataPack();
+				tmp.WriteString(tmpname);
+				tmp.WriteString(tmpvalue);
+				tmp.Reset();
+
+				list.Push(tmp);
+			} while(kvEventos.GotoNextKey());
+
+			kvEventos.GoBack();
+		}
+
+		kvEventos.GoBack();
+	}
+}
+#endif
+
 stock int Native_Evento_GetStartCommands(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
+	ArrayList list = GetNativeCell(2);
+
+#if defined __USING_API
 	JSONObject evento_json = view_as<JSONObject>(evento);
 	JSONArray commands_json = view_as<JSONArray>(evento_json.Get("startCommands"));
-	
-	ArrayList list = GetNativeCell(2);
 	
 	JSONArray json = commands_json;
 	for(int i = 0; i < json.Length; i++) {
@@ -54,17 +109,59 @@ stock int Native_Evento_GetStartCommands(Handle plugin, int params)
 		list.Push(command);
 	}
 	delete json;
+#elseif defined __USE_KEYVALUES
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		HandleStartCommands(list);
+		kvEventos.GoBack();
+	}
+
+	if(kvEventos.JumpToKeySymbol(defaultid)) {
+		HandleStartCommands(list);
+		kvEventos.GoBack();
+	}
+#endif
 	
 	return 1;
 }
+
+#if defined __USE_KEYVALUES
+stock void HandleEndEvents(ArrayList list)
+{
+	if(kvEventos.JumpToKey("cmd_end")) {
+		if(kvEventos.GotoFirstSubKey()) {
+			char tmpname[64];
+			char tmpvalue[64];
+			do {
+				kvEventos.GetSectionName(tmpname, sizeof(tmpname));
+				kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
+
+				DataPack tmp = new DataPack();
+				tmp.WriteString(tmpname);
+				tmp.WriteString(tmpvalue);
+				tmp.Reset();
+
+				list.Push(tmp);
+			} while(kvEventos.GotoNextKey());
+
+			kvEventos.GoBack();
+		}
+		kvEventos.GoBack();
+	}
+}
+#endif
 
 stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
+	ArrayList list = GetNativeCell(2);
+
+#if defined __USING_API
 	JSONObject evento_json = view_as<JSONObject>(evento);
 	JSONArray commands_json = view_as<JSONArray>(evento_json.Get("endCommands"));
-	
-	ArrayList list = GetNativeCell(2);
 	
 	JSONArray json = commands_json;
 	for(int i = 0; i < json.Length; i++) {
@@ -73,17 +170,62 @@ stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 		list.Push(command);
 	}
 	delete json;
+#elseif defined __USE_KEYVALUES
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		HandleEndEvents(list);
+		kvEventos.GoBack();
+	}
+
+	if(kvEventos.JumpToKeySymbol(defaultid)) {
+		HandleEndEvents(list);
+		kvEventos.GoBack();
+	}
+#endif
 	
 	return 1;
 }
 
+#if defined __USE_KEYVALUES
+stock void HandleRewards(int id, ArrayList list)
+{
+	if(kvEventos.JumpToKey("reward_items")) {
+		int id2 = -1;
+		if(kvEventos.GetSectionSymbol(id2)) {
+			if(kvEventos.GotoFirstSubKey()) {
+				do {
+					int id3 = -1;
+					if(kvEventos.GetSectionSymbol(id3)) {
+						DataPack tmp = new DataPack();
+						tmp.WriteCell(id);
+						tmp.WriteCell(id2);
+						tmp.WriteCell(id3);
+						tmp.Reset();
+
+						list.Push(tmp);
+					}
+				} while(kvEventos.GotoNextKey());
+
+				kvEventos.GoBack();
+			}
+
+			kvEventos.GoBack();
+		}
+	}
+}
+#endif
+
 stock int Native_Evento_GetRewards(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
+	ArrayList list = GetNativeCell(2);
+
+#if defined __USING_API
 	JSONObject evento_json = view_as<JSONObject>(evento);
 	JSONArray rewards_json = view_as<JSONArray>(evento_json.Get("items"));
-	
-	ArrayList list = GetNativeCell(2);
 	
 	JSONArray json = rewards_json;
 	for(int i = 0; i < json.Length; i++) {
@@ -92,17 +234,33 @@ stock int Native_Evento_GetRewards(Handle plugin, int params)
 		list.Push(reward);
 	}
 	delete json;
-	
+#elseif defined __USE_KEYVALUES
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		HandleRewards(id, list);
+		kvEventos.GoBack();
+	}
+
+	if(kvEventos.JumpToKeySymbol(defaultid)) {
+		HandleRewards(defaultid, list);
+		kvEventos.GoBack();
+	}
+#endif
+
 	return 1;
 }
 
 stock int Native_Evento_GetRequirements(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
+	ArrayList list = GetNativeCell(2);
+
+#if defined __USING_API
 	JSONObject evento_json = view_as<JSONObject>(evento);
 	JSONArray requirements_json = view_as<JSONArray>(evento_json.Get("requirements"));
-	
-	ArrayList list = GetNativeCell(2);
 	
 	JSONArray json = requirements_json;
 	for(int i = 0; i < json.Length; i++) {
@@ -111,6 +269,9 @@ stock int Native_Evento_GetRequirements(Handle plugin, int params)
 		list.Push(requirement);
 	}
 	delete json;
+#elseif defined __USE_KEYVALUES
+	
+#endif
 	
 	return 1;
 }
@@ -118,11 +279,15 @@ stock int Native_Evento_GetRequirements(Handle plugin, int params)
 stock int Native_Evento_SetState(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
-	JSONObject evento_json = view_as<JSONObject>(evento);
-	
 	EventState state = view_as<EventState>(GetNativeCell(2));
 	
+#if defined __USING_API
+	JSONObject evento_json = view_as<JSONObject>(evento);
+
 	evento_json.SetInt("state", view_as<int>(state));
+#elseif defined __USE_KEYVALUES
+	
+#endif
 	
 	Call_StartForward(hOnEventStateChanged);
 	Call_PushCell(evento);
@@ -134,9 +299,14 @@ stock int Native_Evento_SetState(Handle plugin, int params)
 stock int Native_Evento_GetState(Handle plugin, int params)
 {
 	Evento evento = GetNativeCell(1);
+
+#if defined __USING_API
 	JSONObject evento_json = view_as<JSONObject>(evento);
 	
 	EventState state = view_as<EventState>(evento_json.GetInt("state"));
+#elseif defined __USE_KEYVALUES
+	EventState state = view_as<EventState>(-1);
+#endif
 	
 	return view_as<int>(state);
 }
@@ -148,17 +318,34 @@ stock int Native_Evento_GetOptions(Handle plugin, int params)
 
 stock int Native_Eventinho_GetAllEvents(Handle plugin, int params)
 {
+	ArrayList list = GetNativeCell(1);
+
+#if defined __USING_API
 	if(jsonEventos == null) {
 		return 0;
 	}
-	
-	ArrayList list = GetNativeCell(1);
 	
 	for(int i = 0; i < jsonEventos.Length; i++) {
 		Evento tmp = view_as<Evento>(jsonEventos.Get(i));
 		
 		list.Push(tmp);
 	}
+#elseif defined __USE_KEYVALUES
+	StringMapSnapshot snapshot = EventoMap.Snapshot();
+	int len = snapshot.Length;
+	char tmpname[64];
+	for(int i = 0; i < len; ++i) {
+		snapshot.GetKey(i, tmpname, sizeof(tmpname));
+		int id = -1;
+		if(EventoMap.GetValue(tmpname, id)) {
+			DataPack tmp = new DataPack();
+			tmp.WriteCell(id);
+			tmp.Reset();
+			list.Push(tmp);
+		}
+	}
+	delete snapshot;
+#endif
 	
 	return 1;
 }

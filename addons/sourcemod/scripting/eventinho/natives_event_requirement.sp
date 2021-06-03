@@ -7,6 +7,8 @@ stock void Register_EventRequirement_Natives()
 stock int Native_EventRequirement_GetType(Handle plugin, int params)
 {
 	EventRequirement requirement = GetNativeCell(1);
+
+#if defined __USING_API
 	JSONObject requirement_json = view_as<JSONObject>(requirement);
 
 	char nome[64];
@@ -21,6 +23,9 @@ stock int Native_EventRequirement_GetType(Handle plugin, int params)
 	} else if(StrEqual(nome, "player_team")) {
 		return view_as<int>(ReqPlayerTeam);
 	}
+#elseif defined __USE_KEYVALUES
+	
+#endif
 
 	return view_as<int>(ReqUnknown);
 }
@@ -28,10 +33,11 @@ stock int Native_EventRequirement_GetType(Handle plugin, int params)
 stock int Native_EventRequirement_GetValues(Handle plugin, int params)
 {
 	EventRequirement requirement = GetNativeCell(1);
+	ArrayList list = GetNativeCell(2);
+
+#if defined __USING_API
 	JSONObject requirement_json = view_as<JSONObject>(requirement);
 	JSONArray values_json = view_as<JSONArray>(requirement_json.Get("values"));
-
-	ArrayList list = GetNativeCell(2);
 
 	JSONArray json = values_json;
 	for(int i = 0; i < json.Length; i++) {
@@ -41,6 +47,9 @@ stock int Native_EventRequirement_GetValues(Handle plugin, int params)
 		list.PushString(value);
 	}
 	delete json;
+#elseif defined __USE_KEYVALUES
+	
+#endif
 
 	return 1;
 }

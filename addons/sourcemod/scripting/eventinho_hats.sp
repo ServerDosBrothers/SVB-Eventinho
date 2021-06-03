@@ -6,6 +6,8 @@
 #include <morecolors>
 #include <clientprefs>
 
+#include <ripext>
+
 #define EF_BONEMERGE 0x001
 #define EF_BONEMERGE_FASTCULL 0x080
 #define EF_PARENT_ANIMATES 0x200
@@ -25,11 +27,15 @@ Handle hCoroaCookie = null;
 
 Database hDB = null;
 
+//ConVar STEAM_API_KEY = null;
+//HTTPRequest hApiClient = null;
+//#define STEAMAPIURL "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2"
+
 public Plugin myinfo =
 {
 	name = "eventinho_hats",
 	author = "Arthurdead",
-	description = "",
+	description = "hats para vencedors de ventos. --- REST EXT",
 	version = "",
 	url = ""
 };
@@ -76,6 +82,8 @@ public void OnPluginStart()
 	RegAdminCmd("sm_coroas", ConCommand_Coroas, ADMFLAG_ROOT);
 
 	hCoroaCookie = RegClientCookie("coroa_preferida_v3", "Coroa preferida.", CookieAccess_Private);
+
+	//STEAM_API_KEY = CreateConVar("sm_eventinho_key_steam", "D76E98A00B02E0EE4CEA45723A09533A");
 
 	if(SQL_CheckConfig("eventinho_hats")) {
 		Database.Connect(OnConnect, "eventinho_hats");
@@ -171,14 +179,19 @@ stock void GetRewards(Database db, any data, int numQueries, DBResultSet[] resul
 
 		Evento event = null;
 		Eventinho_FindEvento(nome, event);
+		if(event != null) {
+			ArrayList rewards = CacheRewards(event, nome);
+			
+			delete event;
+			
+			hPlayerRewards[data] = rewards;
 
-		ArrayList rewards = CacheRewards(event, nome);
-		
-		delete event;
-		
-		hPlayerRewards[data] = rewards;
+			GiveItems(data);
+		} else {
+			hPlayerRewards[data] = null;
 
-		GiveItems(data);
+			DeleteItems(data);
+		}
 	}
 }
 
@@ -275,6 +288,73 @@ stock Action ConCommand_Coroas(int client, int args)
 	return Plugin_Handled;
 }
 
+stock int GetClientOfSteamId(int steamid)
+{
+	for(int i = 1; i <= MaxClients; ++i) {
+		if(!IsClientConnected(i) || IsFakeClient(i)) {
+			continue;
+		}
+
+		if(GetSteamAccountID(i) == steamid) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+/*stock void AccIDToSteam64(int accid, char[] str, int len)
+{
+	int universe = 0;
+	int lowid = 0;
+
+	if((accid % 2) == 0) {
+		universe = 0;
+		lowid = (accid / 2);
+	} else {
+		universe = 1;
+		lowid = ((accid-1) / 2);
+	}
+
+	StrCat(str, len, "7656119");
+
+	lowid = ((lowid * 2) + (7960265728 + universe));
+
+	char tmp[64];
+	IntToString(lowid, tmp, sizeof(tmp));
+
+	StrCat(str, len, tmp);
+}
+
+stock void GetPlayerSummaries(ArrayList steamids)
+{
+	char key[64];
+	STEAM_API_KEY.GetString(key, sizeof(key));
+
+	//hApiClient = new HTTPRequest(STEAMAPIURL);
+	//hApiClient.AppendQueryParam("key", "%s", key);
+
+	int len = steamids.Length;
+
+	int stridslen = (64 * len);
+	char[] strids = new char[stridslen];
+	for(int i = 0; i < len; ++i) {
+		char tmp[64];
+		steamids.GetString(i, tmp, sizeof(tmp));
+		StrCat(strids, stridslen, tmp);
+		StrCat(strids, stridslen, ",");
+	}
+
+	strids[strlen(strids)-1] = '\0';
+
+	//hApiClient.AppendQueryParam("steamids", "%s", strids);
+	//hApiClient.Get(RestSummaries);
+
+	//delete hApiClient;
+
+	PrintToServer("%s/?key=%s&steamids=%s", STEAMAPIURL, key, strids);
+}*/
+
 stock void PrintCoroas(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
 	if(numQueries > 0) {
@@ -291,7 +371,12 @@ stock void PrintCoroas(Database db, any data, int numQueries, DBResultSet[] resu
 
 				int steamid = set.FetchInt(1);
 
-				PrintToConsole(data, "%i - %s", steamid, nome);
+				int client = GetClientOfSteamId(steamid);
+				if(client != -1) {
+					PrintToConsole(data, "%N - %s", client, nome);
+				} else {
+					PrintToConsole(data, "[U:1:%i] - %s", steamid, nome);
+				}
 			}
 		}
 	}

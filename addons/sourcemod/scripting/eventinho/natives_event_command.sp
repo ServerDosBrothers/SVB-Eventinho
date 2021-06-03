@@ -7,12 +7,17 @@ stock void Register_EventCommand_Natives()
 stock int Native_EventCommand_GetName(Handle plugin, int params)
 {
 	EventCommand command = GetNativeCell(1);
-	JSONObject command_json = view_as<JSONObject>(command);
-	
+
 	int len = GetNativeCell(3);
 	char[] nome = new char[len];
+
+#if defined __USING_API
+	JSONObject command_json = view_as<JSONObject>(command);
 	
 	command_json.GetString("name", nome, len);
+#elseif defined __USE_KEYVALUES
+	
+#endif
 	
 	SetNativeString(2, nome, len);
 	return 1;
@@ -21,12 +26,17 @@ stock int Native_EventCommand_GetName(Handle plugin, int params)
 stock int Native_EventCommand_GetValue(Handle plugin, int params)
 {
 	EventCommand command = GetNativeCell(1);
-	JSONObject command_json = view_as<JSONObject>(command);
-	
+
 	int len = GetNativeCell(3);
 	char[] nome = new char[len];
+
+#if defined __USING_API
+	JSONObject command_json = view_as<JSONObject>(command);
 	
 	command_json.GetString("value", nome, len);
+#elseif defined __USE_KEYVALUES
+	
+#endif
 	
 	SetNativeString(2, nome, len);
 	return 1;
