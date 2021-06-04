@@ -67,9 +67,9 @@ stock int Native_Evento_GetDescription(Handle plugin, int params)
 }
 
 #if defined __USE_KEYVALUES
-stock void HandleStartCommands(ArrayList list)
+stock void HandleCommands(const char[] name, ArrayList list)
 {
-	if(kvEventos.JumpToKey("cmd_start")) {
+	if(kvEventos.JumpToKey(name)) {
 		if(kvEventos.GotoFirstSubKey()) {
 			char tmpname[64];
 			char tmpvalue[64];
@@ -78,7 +78,11 @@ stock void HandleStartCommands(ArrayList list)
 				kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
 
 				DataPack tmp = new DataPack();
+				int len = strlen(tmpname)+1;
+				tmp.WriteCell(len);
 				tmp.WriteString(tmpname);
+				len = strlen(tmpvalue)+1;
+				tmp.WriteCell(len);
 				tmp.WriteString(tmpvalue);
 				tmp.Reset();
 
@@ -115,44 +119,18 @@ stock int Native_Evento_GetStartCommands(Handle plugin, int params)
 	evento_pack.Reset();
 
 	if(kvEventos.JumpToKeySymbol(id)) {
-		HandleStartCommands(list);
+		HandleCommands("cmd_start", list);
 		kvEventos.GoBack();
 	}
 
 	if(kvEventos.JumpToKeySymbol(defaultid)) {
-		HandleStartCommands(list);
+		HandleCommands("cmd_start", list);
 		kvEventos.GoBack();
 	}
 #endif
 	
 	return 1;
 }
-
-#if defined __USE_KEYVALUES
-stock void HandleEndEvents(ArrayList list)
-{
-	if(kvEventos.JumpToKey("cmd_end")) {
-		if(kvEventos.GotoFirstSubKey()) {
-			char tmpname[64];
-			char tmpvalue[64];
-			do {
-				kvEventos.GetSectionName(tmpname, sizeof(tmpname));
-				kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
-
-				DataPack tmp = new DataPack();
-				tmp.WriteString(tmpname);
-				tmp.WriteString(tmpvalue);
-				tmp.Reset();
-
-				list.Push(tmp);
-			} while(kvEventos.GotoNextKey());
-
-			kvEventos.GoBack();
-		}
-		kvEventos.GoBack();
-	}
-}
-#endif
 
 stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 {
@@ -176,12 +154,12 @@ stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 	evento_pack.Reset();
 
 	if(kvEventos.JumpToKeySymbol(id)) {
-		HandleEndEvents(list);
+		HandleCommands("cmd_end", list);
 		kvEventos.GoBack();
 	}
 
 	if(kvEventos.JumpToKeySymbol(defaultid)) {
-		HandleEndEvents(list);
+		HandleCommands("cmd_end", list);
 		kvEventos.GoBack();
 	}
 #endif
@@ -190,9 +168,9 @@ stock int Native_Evento_GetEndCommands(Handle plugin, int params)
 }
 
 #if defined __USE_KEYVALUES
-stock void HandleRewards(int id, ArrayList list)
+stock void HandleSubKeys(const char[] name, int id, ArrayList list)
 {
-	if(kvEventos.JumpToKey("reward_items")) {
+	if(kvEventos.JumpToKey(name)) {
 		int id2 = -1;
 		if(kvEventos.GetSectionSymbol(id2)) {
 			if(kvEventos.GotoFirstSubKey()) {
@@ -240,12 +218,12 @@ stock int Native_Evento_GetRewards(Handle plugin, int params)
 	evento_pack.Reset();
 
 	if(kvEventos.JumpToKeySymbol(id)) {
-		HandleRewards(id, list);
+		HandleSubKeys("reward_items", id, list);
 		kvEventos.GoBack();
 	}
 
 	if(kvEventos.JumpToKeySymbol(defaultid)) {
-		HandleRewards(defaultid, list);
+		HandleSubKeys("reward_items", defaultid, list);
 		kvEventos.GoBack();
 	}
 #endif
@@ -270,7 +248,19 @@ stock int Native_Evento_GetRequirements(Handle plugin, int params)
 	}
 	delete json;
 #elseif defined __USE_KEYVALUES
-	
+	DataPack evento_pack = view_as<DataPack>(evento);
+	int id = evento_pack.ReadCell();
+	evento_pack.Reset();
+
+	if(kvEventos.JumpToKeySymbol(id)) {
+		HandleSubKeys("requirements", id, list);
+		kvEventos.GoBack();
+	}
+
+	if(kvEventos.JumpToKeySymbol(defaultid)) {
+		HandleSubKeys("requirements", defaultid, list);
+		kvEventos.GoBack();
+	}
 #endif
 	
 	return 1;
@@ -286,7 +276,7 @@ stock int Native_Evento_SetState(Handle plugin, int params)
 
 	evento_json.SetInt("state", view_as<int>(state));
 #elseif defined __USE_KEYVALUES
-	
+	kvEventos.SetNum("state", view_as<int>(state));
 #endif
 	
 	Call_StartForward(hOnEventStateChanged);
@@ -305,7 +295,7 @@ stock int Native_Evento_GetState(Handle plugin, int params)
 	
 	EventState state = view_as<EventState>(evento_json.GetInt("state"));
 #elseif defined __USE_KEYVALUES
-	EventState state = view_as<EventState>(-1);
+	EventState state = view_as<EventState>(kvEventos.GetNum("state"));
 #endif
 	
 	return view_as<int>(state);

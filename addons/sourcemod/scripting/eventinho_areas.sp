@@ -36,10 +36,10 @@ int g_TmpAdmin = -1;
 
 public void OnPluginStart()
 {
-	RegAdminCmd("sm_reloadareas", ConCommand_ReloadAreas, ADMFLAG_ROOT);
+	RegAdminCmd("sm_rareas", ConCommand_ReloadAreas, ADMFLAG_ROOT);
 	RegAdminCmd("sm_getpos", ConCommand_GetPos, ADMFLAG_ROOT);
-	RegAdminCmd("sm_setteleport", ConCommand_SetTeleport, ADMFLAG_ROOT);
-	RegAdminCmd("sm_resetteleport", ConCommand_ResetTeleport, ADMFLAG_ROOT);
+	RegAdminCmd("sm_stele", ConCommand_SetTeleport, ADMFLAG_ROOT);
+	RegAdminCmd("sm_rtele", ConCommand_ResetTeleport, ADMFLAG_ROOT);
 	
 	char filepath[64];
 	BuildPath(Path_SM, filepath, sizeof(filepath), "data/eventinho_areas.txt");

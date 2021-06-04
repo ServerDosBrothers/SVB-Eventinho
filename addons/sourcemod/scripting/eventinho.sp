@@ -76,7 +76,11 @@ public Plugin myinfo =
 	name = "eventinho",
 	author = "Arthurdead/Mathx",
 #if defined __USE_REST_EXT
+	#if defined __OLD_REST_EXT
+	description = "Plugin para ajudar staff nos eventos. --- REST EXT -- OLD",
+	#else
 	description = "Plugin para ajudar staff nos eventos. --- REST EXT",
+	#endif
 #elseif defined __USE_SYSTEM2
 	#if defined __USE_SMJANSSON
 	description = "Plugin para ajudar staff nos eventos. --- System2 - SMJansson",

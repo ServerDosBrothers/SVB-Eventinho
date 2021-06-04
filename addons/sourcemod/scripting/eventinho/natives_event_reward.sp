@@ -102,23 +102,30 @@ stock int Native_EventReward_GetAttributes(Handle plugin, int params)
 	if(kvEventos.JumpToKeySymbol(id)) {
 		if(kvEventos.JumpToKeySymbol(id2)) {
 			if(kvEventos.JumpToKeySymbol(id3)) {
-				char tmpname[64];
-				char tmpvalue[64];
-				do {
-					kvEventos.GetSectionName(tmpname, sizeof(tmpname));
-					kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
+				if(kvEventos.JumpToKey("attributes")) {
+					if(kvEventos.GotoFirstSubKey(false)) {
+						char tmpname[64];
+						char tmpvalue[64];
+						do {
+							kvEventos.GetSectionName(tmpname, sizeof(tmpname));
+							kvEventos.GetString(NULL_STRING, tmpvalue, sizeof(tmpvalue));
 
-					int attrid = StringToInt(tmpname);
-					float attrval = StringToFloat(tmpvalue);
+							int attrid = StringToInt(tmpname);
+							float attrval = StringToFloat(tmpvalue);
 
-					DataPack tmp = new DataPack();
-					tmp.WriteCell(attrid);
-					tmp.WriteFloat(attrval);
-					tmp.Reset();
+							DataPack tmp = new DataPack();
+							tmp.WriteCell(attrid);
+							tmp.WriteFloat(attrval);
+							tmp.Reset();
 
-					list.Push(tmp);
-				} while(kvEventos.GotoNextKey());
+							list.Push(tmp);
+						} while(kvEventos.GotoNextKey(false));
 
+						kvEventos.GoBack();
+					}
+
+					kvEventos.GoBack();
+				}
 				kvEventos.GoBack();
 			}
 			kvEventos.GoBack();

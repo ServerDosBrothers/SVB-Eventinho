@@ -38,28 +38,11 @@ stock void Core_Init()
 	AddMultiTargetFilter("@evento", FilterEvento, "Todos participando do evento.", false);
 	AddMultiTargetFilter("@!evento", FilterEvento, "Todos não paticipando do evento.", false);
 
-	static const char teams[][3] = {
-		"red",
-		"blu"
-	};
+	AddMultiTargetFilter("@redevento", FilterEvento, "Todos participando do evento.", false);
+	AddMultiTargetFilter("@!redevento", FilterEvento, "Todos não paticipando do evento.", false);
 
-	for(int i = 0; i < sizeof(teams); i++) {
-		int len = 3+8;
-		char[] name = new char[len];
-		Format(name, len, "@%sevento", teams[i]);
-		AddMultiTargetFilter(name, FilterEvento, "Todos participando do evento.", false);
-		Format(name, len, "@!%sevento", teams[i]);
-		AddMultiTargetFilter(name, FilterEvento, "Todos não paticipando do evento.", false);
-	}
-
-	/*static const char classes[][] = {
-		"sco",
-		"sol",
-		"dem",
-		"med",
-		"spy",
-		"eng",
-	};*/
+	AddMultiTargetFilter("@bluevento", FilterEvento, "Todos participando do evento.", false);
+	AddMultiTargetFilter("@!bluevento", FilterEvento, "Todos não paticipando do evento.", false);
 }
 
 stock bool FilterEvento(const char[] filter, ArrayList clients)

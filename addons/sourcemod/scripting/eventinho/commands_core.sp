@@ -233,7 +233,7 @@ stock Action ConCommand_EndEvento(int client, int args)
 			int target = winners.Get(0);
 			CPrintToChatAll(CHAT_PREFIX ... "%N Ganhou o %s.", target, nome);
 		} else {
-			CPrintToChatAll(CHAT_PREFIX ... "%s teve %i vençedores.", nome, len);
+			CPrintToChatAll(CHAT_PREFIX ... "%s teve %i vencedores.", nome, len);
 		}
 
 		Eventinho_EndEvent(winners, 0.0);
@@ -1103,7 +1103,7 @@ stock Action ConCommand_Evento(int client, int args)
 stock Action ConCommand_ForcarEvento(int client, int args)
 {
 	if(args != 2) {
-		CReplyToCommand(client, CHAT_PREFIX ... "Usagem: sm_forceevento <usuario/filter> <1/0>");
+		CReplyToCommand(client, CHAT_PREFIX ... "Usagem: sm_fevento <usuario/filter> <1/0>");
 		return Plugin_Handled;
 	}
 	

@@ -37,6 +37,6 @@ stock int Native_EventRewardAttribute_GetValue(Handle plugin, int params)
 	float val = attribute_pack.ReadFloat();
 	attribute_pack.Reset();
 
-	return val;
+	return view_as<int>(val);
 #endif
 }
