@@ -50,7 +50,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int length)
 
 public void OnPluginStart()
 {
-	GameData hGameConf = new GameData("classmodel");
+	GameData hGameConf = new GameData("playermodel");
 	if(hGameConf == null) {
 		SetFailState("Gamedata not found.");
 		return;
@@ -113,11 +113,15 @@ public void OnClientCookiesCached(int client)
 		Evento event = null;
 		Eventinho_FindEvento(value, event);
 
-		ArrayList rewards = CacheRewards(event, value);
-		
-		delete event;
-		
-		hPlayerRewards[client] = rewards;
+		if(event != null) {
+			ArrayList rewards = CacheRewards(event, value);
+			
+			delete event;
+			
+			hPlayerRewards[client] = rewards;
+		} else {
+			hPlayerRewards[client] = null;
+		}
 	}
 }
 
