@@ -4,10 +4,10 @@
 #include <tf2_stocks>
 #include <sdkhooks>
 
-#define __USE_REST_EXT
+//#define __USE_REST_EXT
 //#define __USE_SYSTEM2
 //#define __USE_SMJANSSON
-//#define __USE_KEYVALUES
+#define __USE_KEYVALUES
 
 #define __OLD_REST_EXT
 

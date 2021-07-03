@@ -640,4 +640,20 @@
 			}
 		}
 	}
+
+	"Boss Fight"
+	{
+		"explain" "Jogadores terão que se juntar para mata o boss. O que tiver mais dano causado apos ele morrer, sera o vencedor"
+
+		"reward_items"
+		{
+			"342"
+			{
+				"attributes"
+				{
+					"134" "9.0"
+				}
+			}
+		}
+	}
 }

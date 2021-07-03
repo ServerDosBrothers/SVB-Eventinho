@@ -81,7 +81,7 @@ stock bool TeamSupportsEvent(ArrayList requirements, const char[] team, char[] o
 			values = new ArrayList(64);
 			requirement.GetValues(values);
 		}
-		//delete requirement;
+		delete requirement;
 
 		if(values) {
 			bool found = FindStrInArrayEx(values, team, out, len);

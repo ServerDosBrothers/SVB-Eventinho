@@ -60,6 +60,9 @@ stock int Native_Evento_GetDescription(Handle plugin, int params)
 		kvEventos.GetString("explain", nome, len);
 		kvEventos.GoBack();
 	}
+
+	ReplaceString(nome, len, "\\n", "\n");
+	ReplaceString(nome, len, "\\t", "\t");
 #endif
 	
 	SetNativeString(2, nome, len);
