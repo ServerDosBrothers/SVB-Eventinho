@@ -1,0 +1,146 @@
+"Eventos"
+{
+	"Battle Royale"
+	{
+		"explains"
+		{
+			"0" "Explicativo por si só, tem que sobreviver utilizando melee."
+			"1" "Duplas são permitidas, porem tem apenas um vencedor."
+			"2" "Caso a dupla chegue no final, terão que decidir quem vai ganhar o premio."
+		}
+
+		"classes_blacklist" "medic"
+
+		"coroa_unusual" "111.0"
+	}
+
+	"Dispenser"
+	{
+		"explains"
+		{
+			"0" "Cada jogador vai construir uma única dispenser com efeito unusual."
+			"1" "Staff vai construir dispensers até pegar o mesmo efeito que um dos jogadores, que terá a sua dispenser alterada para o próximo nível."
+			"2" "O vencedor será o primeiro a obter dispenser nível 3."
+		}
+
+		"classes_whitelist" "engineer"
+
+		"cmd_start"
+		{
+			"0" "sm_setmetal @evento 0"
+		}
+
+		"coroa_unusual" "31.0"
+	}
+
+	"Nuke"
+	{
+		"explains"
+		{
+			"0" "Voces precisam sobreviver as explosões de nuke, elas são indicadas com fumaça azul, apos um tempo essa fumaça azul ira explodir."
+			"1" "A fumaça que fica depois da explosão da um dano por segundo"
+			"2" "Bonk e Ubercarga do medico te deixa imune a essa explosão e estão liberadas para utilizar."
+		}
+
+		"weapons_blacklist"
+		{
+			"0" "237"
+			"1" "265"
+		}
+
+		"coroa_unusual" "35.0"
+	}
+
+	"Spycrab"
+	{
+		"explains"
+		{
+			"0" "Voces devem ficar com o kit de disfarçe na mão."
+			"1" "Não vale ficar com outra coisa alem do kit de disfarçe na mão, ficar disfarçado e ficar usando taunt."
+		}
+
+		"classes_whitelist" "spy"
+
+		"coroa_unusual" "60.0"
+	}
+
+	"Boxing"
+	{
+		"explains"
+		{
+			"0" "Duelo 1x1 entre classes utilizando apenas melee"
+		}
+
+		"classes_whitelist" "heavy"
+
+		"coroa_unusual" "11.0"
+	}
+
+	"Piscina Mortal"
+	{
+		"explains"
+		{
+			"0" "jogadores serão puxados para o fundo da piscina e tem que subir para a prancha o mais rapido possivel."
+			"1" "CUIDADO COM O LASER ANTES DE SUBIR PARA A PRANCHA."
+		}
+
+		"classes_whitelist" "heavy"
+
+		"coroa_unusual" "34.0"
+	}
+
+	"Esconde-esconde"
+	{
+		"explains"
+		{
+			"0" "O Staff que estiver fazendo o evento, ira se esconder em algum canto do mapa atual com 1HP, resize de 0.30 e de Spy."
+			"1" "Vence o jogador que matar o STAFF PRIMEIRO."
+		}
+
+		"cmd_start"
+		{
+			"0" "sm_changeteam_block @all 1"
+		}
+
+		"cmd_end"
+		{
+			"0" "sm_changeteam_block @all 0"
+		}
+
+		"coroa_unusual" "17.0"
+	}
+
+	"Hoovy Race"
+	{
+		"explains"
+		{
+			"0" "Os jogadores devem chegar no final do corredor sem que o STAFF O VEJA CORRENDO\nNão vale a luva de velocidade"
+		}
+
+		"classes_whitelist" "heavy"
+
+		"cmd_start"
+		{
+			"0" "sm_setspawn @evento"
+		}
+
+		"cmd_end"
+		{
+			"0" "sm_resetspawn @evento"
+		}
+
+		"coroa_unusual" "10.0"
+	}
+
+	"Dodgeball"
+	{
+		"explains"
+		{
+			"0" "Tenis de pyro, um unico vencedor.\nVence aquele que conseguir matar todos os adversarios."
+		}
+
+		"classes_whitelist" "pyro"
+
+		"coroa_unusual" "88.0"
+	}
+}
