@@ -2,7 +2,7 @@
 #include <keyvalues>
 #include <tf2>
 #include <tf2_stocks>
-#include <colorlib>
+#include <morecolors>
 #include <teammanager>
 #include <sdkhooks>
 #include <tf2items>
@@ -1069,14 +1069,14 @@ public void OnPluginStart()
 
 	HookEvent("post_inventory_application", post_inventory_application);
 
-	AddMultiTargetFilter("@evento", filter_evento, "Todos participando do evento.", false);
-	AddMultiTargetFilter("@!evento", filter_evento, "Todos não paticipando do evento.", false);
+	AddMultiTargetFilter("@evento", filter_evento, "Todos participando do evento", false);
+	AddMultiTargetFilter("@!evento", filter_evento, "Todos não paticipando do evento", false);
 
-	AddMultiTargetFilter("@redevento", filter_evento, "Todos participando do evento.", false);
-	AddMultiTargetFilter("@!redevento", filter_evento, "Todos não paticipando do evento.", false);
+	AddMultiTargetFilter("@redevento", filter_evento, "Todos participando do evento", false);
+	AddMultiTargetFilter("@!redevento", filter_evento, "Todos não paticipando do evento", false);
 
-	AddMultiTargetFilter("@bluevento", filter_evento, "Todos participando do evento.", false);
-	AddMultiTargetFilter("@!bluevento", filter_evento, "Todos não paticipando do evento.", false);
+	AddMultiTargetFilter("@bluevento", filter_evento, "Todos participando do evento", false);
+	AddMultiTargetFilter("@!bluevento", filter_evento, "Todos não paticipando do evento", false);
 
 	for(int i = 1; i <= MaxClients; ++i) {
 		if(IsClientInGame(i)) {
@@ -1184,7 +1184,7 @@ public Action TeamManager_CanChangeTeam(int entity, int team)
 				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
 
 				if(eventoinfo.team > 0 && eventoinfo.team != team) {
-					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "nao e permitido %s no evento %s", "", eventoinfo.name);
+					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", "", eventoinfo.name);
 					return Plugin_Handled;
 				}
 			}
@@ -1222,7 +1222,7 @@ public Action TeamManager_CanChangeClass(int entity, int class)
 				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
 
 				if(!is_class_valid(eventoinfo, class)) {
-					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "nao e permitido %s no evento %s", "", eventoinfo.name);
+					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", "", eventoinfo.name);
 					return Plugin_Handled;
 				}
 			}
@@ -1234,19 +1234,19 @@ public Action TeamManager_CanChangeClass(int entity, int class)
 static Action sm_evento(int client, int args)
 {
 	if(client == 0) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "sai do console");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não é possível executar esse comando pelo console");
 		return Plugin_Handled;
 	}
 
 	if(current_evento == -1) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao ha nenhum evento no momento");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento no momento");
 		return Plugin_Handled;
 	}
 
 	if((current_state == EVENTO_STATE_IN_PROGRESS ||
 		current_state == EVENTO_STATE_IN_COUNTDOWN_END) &&
 		evento_secs != -1) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao e possivel participar de um evento em progresso");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não é possivel participar de um evento em progresso");
 		return Plugin_Handled;
 	}
 
@@ -1259,17 +1259,17 @@ static Action sm_evento(int client, int args)
 		evento_explain_menu(client, current_evento);
 
 		if(evento_secs == -1) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "voce esta participando do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N esta participando do evento %s digite !evento para participar tbm", client, eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você está participando do evento %s", eventoinfo.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N está participando do evento %s. Digite !evento para participar também", client, eventoinfo.name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "voce ira participar do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s digite !evento para participar tbm", client, eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você irá participar do evento %s", eventoinfo.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s. Digite !evento para participar também", client, eventoinfo.name);
 		}
 	} else {
 		if(evento_secs == -1) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "voce nao esta mais participando do evento %s", eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não está mais participando do evento %s", eventoinfo.name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "voce nao vai mais participando do evento %s", eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não vai mais participar do evento %s", eventoinfo.name);
 		}
 	}
 
@@ -1623,7 +1623,7 @@ static void rank_menu(int client, int item)
 static Action sm_rankevento(int client, int args)
 {
 	if(evento_infos == null) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao ha nenhum evento carregado");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não existe nenhum evento registrado");
 		return Plugin_Handled;
 	}
 
@@ -1639,12 +1639,12 @@ static Action sm_rankevento(int client, int args)
 static Action sm_explain(int client, int args)
 {
 	if(evento_infos == null) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao ha nenhum evento carregado");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não existe nenhum evento registrado");
 		return Plugin_Handled;
 	}
 
 	if(client == 0) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "sai do console");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não é possível executar esse comando pelo console");
 		return Plugin_Handled;
 	}
 
@@ -1737,7 +1737,7 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 		int player = StringToInt(intstr);
 		player = GetClientOfUserId(player);
 		if(player == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "o jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
 			players_menu(param1, idx);
 			return 0;
 		}
@@ -1766,7 +1766,7 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 		player = GetClientOfUserId(player);
 		if(player == 0) {
 			int idx = StringToInt(intstr);
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "o jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
 			players_menu(param1, idx);
 			return 0;
 		}
@@ -1857,7 +1857,7 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		param2 = GetClientOfUserId(param2);
 
 		if(param2 == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "o jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador foi desconectado");
 			players_menu(param1, idx);
 		} else {
 			player_menu(param1, param2, idx);
@@ -1978,7 +1978,7 @@ static int winner_menu_handler(Menu menu, MenuAction action, int param1, int par
 		int player = StringToInt(intstr);
 		player = GetClientOfUserId(player);
 		if(player == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "o jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador foi desconectado");
 			winners_menu(param1, idx);
 			return 0;
 		}
@@ -2195,7 +2195,7 @@ static void cancel_evento()
 {
 	clear_evento_vars();
 
-	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "evento cancelado");
+	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento cancelado");
 }
 
 static void end_evento()
@@ -2300,7 +2300,7 @@ static void end_evento()
 		thedb.Execute(tr, query_recreate_rankmenus, on_tr_error);
 	}
 
-	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "evento terminado");
+	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento terminado");
 
 	clear_evento_vars();
 }
@@ -2364,7 +2364,7 @@ static void start_evento_queued()
 		handle_player(i, eventoinfo);
 	}
 
-	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "evento inciado");
+	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento inciado");
 }
 
 static bool countdown_tick()
@@ -2459,7 +2459,7 @@ static Action player_say(Event event, const char[] name, bool dontBroadcast)
 				queue_evento_end(secs);
 			}
 		} else {
-			CPrintToChat(client, EVENTO_CHAT_PREFIX ... "tempo invalido");
+			CPrintToChat(client, EVENTO_CHAT_PREFIX ... "Tempo inválido");
 		}
 
 		chat_listen.client = -1;
@@ -2646,13 +2646,13 @@ static int evento_menu_handler(Menu menu, MenuAction action, int param1, int par
 				chat_listen.client = param1;
 				chat_listen.start = true;
 				chat_listen.idx = idx;
-				CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "digite o tempo no chat");
+				CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "Digite o tempo no chat");
 			}
 			case 2, 9: {
 				chat_listen.client = param1;
 				chat_listen.start = false;
 				chat_listen.idx = idx;
-				CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "digite o tempo no chat");
+				CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "Digite o tempo no chat");
 			}
 			case 3: {
 				cancel_evento_end();
@@ -2799,17 +2799,17 @@ static void eventos_menu(int client, int item)
 static Action sm_mevento(int client, int args)
 {
 	if(evento_infos == null) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao ha nenhum evento carregado");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não existe nenhum evento registrado");
 		return Plugin_Handled;
 	}
 
 	if(client == 0) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "sai do console");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não é possível executar esse comando pelo console");
 		return Plugin_Handled;
 	}
 
 	if(usando_menu != -1) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "manda o %N sair do menu de evento", usando_menu);
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "O jogador %N já está utilizando o menu de evento", usando_menu);
 		return Plugin_Handled;
 	}
 
@@ -2832,7 +2832,7 @@ static Action sm_reventos(int client, int args)
 static Action sm_leventos(int client, int args)
 {
 	if(evento_infos == null) {
-		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "nao ha nenhum evento carregado");
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não existe nenhum evento registrado");
 		return Plugin_Handled;
 	}
 
