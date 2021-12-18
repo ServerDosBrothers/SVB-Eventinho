@@ -1297,10 +1297,10 @@ static Action sm_evento(int client, int args)
 
 		if(evento_secs == -1) {
 			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você está participando do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N está participando do evento %s. Digite !evento para participar também", client, eventoinfo.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N está participando do evento %s. Digite !evento para participar também!", client, eventoinfo.name);
 		} else {
 			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você irá participar do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s. Digite !evento para participar também", client, eventoinfo.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s. Digite !evento para participar também!", client, eventoinfo.name);
 		}
 	} else {
 		if(evento_secs == -1) {
@@ -1894,7 +1894,7 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		param2 = GetClientOfUserId(param2);
 
 		if(param2 == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
 			players_menu(param1, idx);
 		} else {
 			player_menu(param1, param2, idx);
@@ -2015,7 +2015,7 @@ static int winner_menu_handler(Menu menu, MenuAction action, int param1, int par
 		int player = StringToInt(intstr);
 		player = GetClientOfUserId(player);
 		if(player == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
 			winners_menu(param1, idx);
 			return 0;
 		}
@@ -2078,7 +2078,7 @@ static int winners_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		param2 = GetClientOfUserId(param2);
 
 		if(param2 == 0) {
-			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "o jogador foi desconectado");
+			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
 			winners_menu(param1, idx);
 		} else {
 			winner_menu(param1, param2, idx);
