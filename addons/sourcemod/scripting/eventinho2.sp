@@ -33,7 +33,7 @@
 #define TIME_STR_MAX 256
 #define TIME_INPUT_STR_MAX ((INT_STR_MAX+1) * 7)
 
-#define EVENTO_CHAT_PREFIX "{blue}[Evento]{default} "
+#define EVENTO_CHAT_PREFIX "{dodgerblue}[Evento]{default} "
 #define EVENTO_CON_PREFIX "[Evento] "
 
 #define COROA_ITEM_INDEX 342
