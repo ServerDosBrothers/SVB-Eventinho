@@ -1184,7 +1184,10 @@ public Action TeamManager_CanChangeTeam(int entity, int team)
 				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
 
 				if(eventoinfo.team > 0 && eventoinfo.team != team) {
-					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", "", eventoinfo.name);
+					char team_name[32];
+					if(team_to_teamname(view_as<TFTeam>(team), team_name, sizeof(team_name))) {
+						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Time %s não é permitido no evento %s", team_name, eventoinfo.name);
+					}
 					return Plugin_Handled;
 				}
 			}
@@ -1222,13 +1225,47 @@ public Action TeamManager_CanChangeClass(int entity, int class)
 				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
 
 				if(!is_class_valid(eventoinfo, class)) {
-					CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", "", eventoinfo.name);
+					char class_name[32];
+					if(class_to_classname(view_as<TFClassType>(class), class_name, sizeof(class_name))) {
+						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", class_name, eventoinfo.name);
+					}
 					return Plugin_Handled;
 				}
 			}
 		}
 	}
 	return Plugin_Continue;
+}
+
+bool team_to_teamname(TFTeam team, char[] name, int length)
+{
+	switch(team)
+	{
+		case TFTeam_Red: { strcopy(name, length, "red"); return true; }
+		case TFTeam_Blue: { strcopy(name, length, "blue"); return true; }
+		case TFTeam_Spectator: { strcopy(name, length, "spectator"); return true; }
+		case TFTeam_Unassigned: { strcopy(name, length, "unassigned"); return true; }
+	}	
+	
+	return false;
+}
+
+bool class_to_classname(TFClassType type, char[] name, int length)
+{
+	switch(type)
+	{
+		case TFClass_Scout: { strcopy(name, length, "scout"); return true; }
+		case TFClass_Soldier: { strcopy(name, length, "soldier"); return true; }
+		case TFClass_Sniper: { strcopy(name, length, "sniper"); return true; }
+		case TFClass_Spy: { strcopy(name, length, "spy"); return true; }
+		case TFClass_Medic: { strcopy(name, length, "medic"); return true; }
+		case TFClass_DemoMan: { strcopy(name, length, "demoman"); return true; }
+		case TFClass_Pyro: { strcopy(name, length, "pyro"); return true; }
+		case TFClass_Engineer: { strcopy(name, length, "engineer"); return true; }
+		case TFClass_Heavy: { strcopy(name, length, "heavy"); return true; }
+	}
+
+	return false;
 }
 
 static Action sm_evento(int client, int args)
