@@ -119,16 +119,6 @@
 
 		"classes_whitelist" "heavy"
 
-		"cmd_start"
-		{
-			"0" "sm_setspawn @evento"
-		}
-
-		"cmd_end"
-		{
-			"0" "sm_resetspawn @evento"
-		}
-
 		"coroa_unusual" "10.0"
 	}
 
@@ -142,5 +132,233 @@
 		"classes_whitelist" "pyro"
 
 		"coroa_unusual" "88.0"
+	}
+
+	"Pega-Pega"
+	{
+		"explains"
+		{
+			"0" "Jogadores serão jogados no labirinto e terão que fugir do STAFF que estiver fazendo o evento."
+			"1" "O STAFF pode ver invisivel e atraves das paredes para facilitar o evento."
+			"2" "Todas as armas podem ser utilizadas, porem nenhum comando pode ser usado."
+		}
+
+		"coroa_unusual" "37.0"
+	}
+
+	"Pedra, Papel e Tesoura"
+	{
+		"explains"
+		{
+			"0" "Jogadores farão um jogo de pedra, papel e tesoura com o organizador do evento."
+			"1" "Os 2 ultimos jogadores farão uma melhor de 3 pra ver quem ganha."
+			"2" "Os jogadores que forem ganhando vao indo para um canto separado da fila."
+			"3" "TODOS OS JOGADORES DEVEM FAZER UMA FILA NA FRENTE DO ORGANIZADOR DO EVENTO."
+		}
+
+		"coroa_unusual" "119.0"
+	}
+
+	"Parkour"
+	{
+		"explains"
+		{
+			"0" "O primeiro que terminar o percurso de parkour ganha."
+		}
+
+		"coroa_unusual" "44.0"
+	}
+
+	"Sniper Fight"
+	{
+		"explains"
+		{
+			"0" "Os jogadores vão ser separados por times e só pode Sniper ( arco e flecha ou sniper)."
+			"1" "Apenas um vencedor."
+			"2" "Proibido Sydney sleep e Machina."
+			"3" "SE NÃO HOUVER COOPERAÇÃO DOS PARTICIPANTES O EVENTO SERA CANCELADO PERMANENTEMENTE."
+		}
+
+		"classes_whitelist" "sniper"
+
+		"coroa_unusual" "83.0"
+	}
+
+	"Color Wars"
+	{
+		"explains"
+		{
+			"0" "Cada time tera um LIDER, e eles terão que se dominar. O primeiro lider a dominar o outro, ganha."
+			"1" "REGRAS: líderes não podem utilizar spy nem engineer."
+		}
+
+		"coroa_unusual" "79.0"
+	}
+
+	"MGE"
+	{
+		"explains"
+		{
+			"0" "Campeonato de partidas 1 vs 1 em uma arena."
+			"1" "Em cada evento será escolhida uma classe para TODOS usarem, podendo ser soldier, scout, demoman ou sniper."
+			"2" "A ordem das partidas e dos seus participantes será decidida de maneira aleatória pela staff."
+		}
+
+		"coroa_unusual" "15.0"
+	}
+
+	"Hat Fortress"
+	{
+		"explains"
+		{
+			"0" "Os jogadores vão ficar sem armas e irão se matar com o RTD de hat arremessável."
+			"1" "O efeito será dado até o final do evento."
+			"2" "APENAS SCOUT e apenas UM VENCEDOR."
+		}
+
+		"cmd_start"
+		{
+			"0" "sm_rweapons @evento"
+		}
+
+		"classes_whitelist" "scout"
+
+		"coroa_unusual" "99.0"
+	}
+
+	"Plague Inc"
+	{
+		"explains"
+		{
+			"0" "Jogadores devem fugir do heavy com efeito de praga, o ultimo vivo ganha."
+			"1" "É PROIBIDO LUVA DE SPEED."
+		}
+
+		"classes_whitelist" "heavy"
+
+		"coroa_unusual" "12.0"
+	}
+
+	"Teste"
+	{
+		"explains"
+		{
+			"0" "??????????????"
+		}
+
+		"coroa_unusual" "40.0"
+	}
+
+	"Caça ao pombo"
+	{
+		"explains"
+		{
+			"0" "Os jogadores serão Scout com gravidade baixa e com 1 de vida. Voces tem que desviar das flechas, o ultimo vivo ganha"
+		}
+
+		"cmd_start"
+		{
+			"0" "sm_rweapons @evento"
+			"1" "sm_sethealth @evento 1"
+			"2" "sm_gravity @evento 0.01"
+		}
+
+		"coroa_unusual" "90.0"
+	}
+
+	"Corzinha"
+	{
+		"explains"
+		{
+			"0" "Os jogadores devem observar a cor que não ira desaparecer na tela em branco na parede, o ultimo jogador vivo ganha"
+		}
+
+		"classes_whitelist" "spy"
+
+		"coroa_unusual" "105.0"
+	}
+
+	"Roleta Russa"
+	{
+		"explains"
+		{
+			"0" "Os jogadores irão fazer uma roda em volta do STAFF."
+			"1" "Ele vai girar durante 5 segundos, a pessoa mais proxima da mira(ou que a mira estiver em cima)"
+			"2" "Será eliminada"
+		}
+
+		"coroa_unusual" "102.0"
+	}
+
+	"Pega a Dispenser!"
+	{
+		"explains"
+		{
+			"0" "Time azul deve proteger a dispenser e o red destruir"
+			"1" "A equipe red tem 5 minutos para destruir a dispenser, do contrario o azul ganha"
+			"2" "Equipe azul não pode ter engineer e o Red não pode Spy"
+		}
+
+		"coroa_unusual" "117.0"
+	}
+
+	"Caçada invisível"
+	{
+		"explains"
+		{
+			"0" "Jogadores ficarem invisivel e tem que ser o ultimo a ser morto pela staff."
+			"1" "Jogadores mortos terão que mudar de time para ajudar a staff a caçar o restante dos jogadores"
+		}
+
+		"coroa_unusual" "14.0"
+	}
+
+	"Boss Fight"
+	{
+		"explains"
+		{
+			"0" "Jogadores terão que se juntar para mata o boss. O que tiver mais dano causado apos ele morrer, sera o vencedor"
+		}
+
+		"coroa_unusual" "9.0"
+	}
+
+	"Shark E Minnows"
+	{
+		"explains"
+		{
+			"0" "Atravesse a arena até chegar na outra parede sem levar um tapão dos tubarões! epico!!"
+			"1" "(nao pode scout/medic)"
+			"2" "(nao pode charge e item de cura)"
+			"3" "Primeiro jogador a morrer vira tubarão!!!tb!!"
+		}
+
+		"classes_blacklist" "scout|medic"
+
+		"coroa_unusual" "130.0"
+	}
+
+	"Dice"
+	{
+		"explains"
+		{
+			"0" "Os jogadores irão digitar /dice e evitar cair os numeros que o staff escolheu, o ultimo a ficar vivo ganha."
+
+		}
+
+		"coroa_unusual" "109.0"
+	}
+
+	"Quiz"
+	{
+		"explains"
+		{
+			"0" "Um Staff vai perguntar perguntas de Verdade ou Falso, e na area do evento vai ter os chãos"
+			"1" "Verde (Verdadeiro) e Vermelho (Falso), cujo o lado esteja errado vai morrer"
+		}
+
+		"classes_whitelist" "spy"
+
+		"coroa_unusual" "223.0"
 	}
 }
