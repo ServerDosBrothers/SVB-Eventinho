@@ -124,6 +124,33 @@ static Menu rankglobal;
 static Menu rankmenu;
 static int laserbeam;
 static int playersprite[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE, ...};
+static bool nukealguemorreu;
+static Achievement achiv_rei1 = Achievement_Null;
+static Achievement achiv_rei2 = Achievement_Null;
+static Achievement achiv_rei3 = Achievement_Null;
+static Achievement achiv_rei4 = Achievement_Null;
+static Achievement achiv_rei5 = Achievement_Null;
+static Achievement achiv_rei6 = Achievement_Null;
+static Achievement achiv_rng = Achievement_Null;
+static Achievement achiv_nuke = Achievement_Null;
+static Achievement achiv_hhh = Achievement_Null;
+static Achievement achiv_parkour = Achievement_Null;
+static Achievement achiv_nezay = Achievement_Null;
+
+public void OnAchievementsLoaded()
+{
+	achiv_rei1 = Achievement.FindByName("rei iniciante");
+	achiv_rei2 = Achievement.FindByName("rei-streak");
+	achiv_rei3 = Achievement.FindByName("rei supremo");
+	achiv_rei4 = Achievement.FindByName("rei profissional");
+	achiv_rei5 = Achievement.FindByName("reis unidos");
+	achiv_rei6 = Achievement.FindByName("rei mediano");
+	achiv_rng = Achievement.FindByName("rng god");
+	achiv_nuke = Achievement.FindByName("war, war never changes");
+	achiv_hhh = Achievement.FindByName("a-besta-do");
+	achiv_parkour = Achievement.FindByName("hardcore parkour");
+	achiv_nezay = Achievement.FindByName("nezay junior");
+}
 
 static bool parse_classes_str(int &classes, const char[] str, const char[] eventoname)
 {
@@ -329,6 +356,10 @@ static void load_eventos()
 			rankmenu.SetTitle("Eventos");
 			rankmenu.AddItem("-1", "Todos");
 			eventomenus = new StringMap();
+			rankglobal = new Menu(rankglobal_menu_handler);
+			rankglobal.SetTitle("Rank global");
+			rankglobal.ExitBackButton = true;
+			rankglobal.AddItem("n", "<<nenhum jogador>>", ITEMDRAW_DISABLED);
 
 			char classesvalue[EVENTO_CLASSES_STR_MAX];
 			char cmdstr[CMD_STR_MAX];
@@ -554,6 +585,13 @@ static void load_eventos()
 
 				menus.classes = create_classes_menu(eventinfo, idx);
 				menus.explain = create_explain_menu(eventinfo, idx);
+
+				menus.ranking = new Menu(evento_rank_menu_handler);
+				menus.ranking.SetTitle(eventinfo.name);
+				menus.ranking.ExitBackButton = true;
+				IntToString(idx, intstr, INT_STR_MAX);
+				menus.ranking.AddItem(intstr, "", ITEMDRAW_IGNORE);
+				menus.ranking.AddItem("n", "<<nenhum jogador>>", ITEMDRAW_DISABLED);
 
 				eventomenus.SetArray(eventinfo.name, menus, sizeof(EventoMenus));
 
@@ -823,7 +861,7 @@ static int rankglobal_menu_handler(Menu menu, MenuAction action, int param1, int
 {
 	if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
-			rank_menu(param1, -1);
+			rank_menu(param1);
 		}
 	}
 
@@ -855,20 +893,8 @@ static void query_create_rankmenus_impl(Database db, DBResultSet set)
 		rankglobal.SetTitle("Rank global");
 		rankglobal.ExitBackButton = true;
 
-		StringMapSnapshot snap = eventomenus.Snapshot();
-		int len = snap.Length;
-		for(int i = 0; i < len; ++i) {
-			snap.GetKey(i, name, EVENTO_NAME_MAX);
-
-			eventomenus.GetArray(name, menus, sizeof(EventoMenus));
-
-			delete menus.ranking;
-
-			eventomenus.SetArray(name, menus, sizeof(EventoMenus));
-		}
-		delete snap;
-
 		char display[MAX_NAME_LENGTH+5+INT_STR_MAX];
+		char intstr[INT_STR_MAX];
 
 		do {
 			do {
@@ -903,47 +929,53 @@ static void query_create_rankmenus_impl(Database db, DBResultSet set)
 
 				int count = set.FetchInt(3);
 
+				if(count >= 5) {
+					if(client != -1) {
+						if(achiv_rei2 != Achievement_Null) {
+							achiv_rei2.Award(client);
+						}
+					}
+				}
+
 			#if defined DEBUG
 				PrintToServer("  %i %s %s %i", accid, plrname, name, count);
 			#endif
 
-				eventomenus.GetArray(name, menus, sizeof(EventoMenus));
-
-				if(!menus.ranking) {
+				ArrayList plrsadded = null;
+				if(!addedmap.GetValue(name, plrsadded)) {
+					plrsadded = new ArrayList(ByteCountToCells(MAX_NAME_LENGTH));
+					eventomenus.GetArray(name, menus, sizeof(EventoMenus));
 					menus.ranking = new Menu(evento_rank_menu_handler);
+					eventomenus.SetArray(name, menus, sizeof(EventoMenus));
 					menus.ranking.SetTitle(name);
 					menus.ranking.ExitBackButton = true;
 					int idx = -1;
 					if(eventoidmap.GetValue(name, idx)) {
-						char intstr[INT_STR_MAX];
 						IntToString(idx, intstr, INT_STR_MAX);
 						menus.ranking.AddItem(intstr, "", ITEMDRAW_IGNORE);
 					}
-					eventomenus.SetArray(name, menus, sizeof(EventoMenus));
-				}
-
-				ArrayList plrsadded = null;
-				if(!addedmap.GetValue(name, plrsadded)) {
-					plrsadded = new ArrayList(ByteCountToCells(MAX_NAME_LENGTH));
-					addedmap.SetValue(plrname, plrsadded);
+					addedmap.SetValue(name, plrsadded);
 				}
 
 				if(plrsadded.FindString(plrname) == -1) {
 					Format(display, sizeof(display), "%s (%i)", plrname, count);
-					menus.ranking.AddItem("", display, ITEMDRAW_DISABLED);
+					IntToString(accid, intstr, INT_STR_MAX);
+					eventomenus.GetArray(name, menus, sizeof(EventoMenus));
+					menus.ranking.AddItem(intstr, display, ITEMDRAW_DISABLED);
 					plrsadded.PushString(plrname);
 				}
 
 				if(globaladded.FindString(plrname) == -1) {
 					Format(display, sizeof(display), "%s (%i)", plrname, count);
-					rankglobal.AddItem("", display, ITEMDRAW_DISABLED);
+					IntToString(accid, intstr, INT_STR_MAX);
+					rankglobal.AddItem(intstr, display, ITEMDRAW_DISABLED);
 					globaladded.PushString(plrname);
 				}
 			} while(set.MoreRows);
 		} while(set.FetchMoreResults());
 
-		snap = addedmap.Snapshot();
-		len = snap.Length;
+		StringMapSnapshot snap = addedmap.Snapshot();
+		int len = snap.Length;
 		for(int i = 0; i < len; ++i) {
 			snap.GetKey(i, name, EVENTO_NAME_MAX);
 
@@ -1021,11 +1053,8 @@ static int evento_rank_menu_handler(Menu menu, MenuAction action, int param1, in
 
 			int idx = StringToInt(intstr);
 
-			if(idx == -1) {
-				rank_menu(param1, -1);
-			} else {
-				evento_explain_menu(param1, idx);
-			}
+			//rank_menu(param1, -1);
+			evento_explain_menu(param1, idx);
 		}
 	}
 
@@ -1056,6 +1085,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_explain", sm_explain);
 	RegConsoleCmd("sm_evento", sm_evento);
 	RegConsoleCmd("sm_rankevento", sm_rankevento);
+	//RegConsoleCmd("sm_coroas", sm_coroas);
+	//RegConsoleCmd("ms_coroa", sm_coroas);
 
 	RegAdminCmd("sm_leventos", sm_leventos, ADMFLAG_ROOT);
 	RegAdminCmd("sm_reventos", sm_reventos, ADMFLAG_ROOT);
@@ -1083,6 +1114,8 @@ public void OnPluginStart()
 			OnClientPutInServer(i);
 		}
 	}
+
+	OnAchievementsLoaded();
 }
 
 static bool filter_evento(const char[] filter, ArrayList clients)
@@ -1165,6 +1198,15 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 			if(participando[client]) {
 				EventoInfo eventoinfo;
 				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+
+				if(!nukealguemorreu) {
+					if(StrEqual(eventoinfo.name, "Nuke")) {
+						if(achiv_nuke != Achievement_Null) {
+							achiv_nuke.Award(client);
+						}
+					}
+					nukealguemorreu = true;
+				}
 
 				if(!eventoinfo.respawn) {
 					set_participando(client, false, true);
@@ -1340,6 +1382,30 @@ public void OnClientPutInServer(int client)
 	}
 
 	SDKHook(client, SDKHook_PostThinkPost, client_post_think_post);
+	SDKHook(client, SDKHook_OnTakeDamageAlivePost, client_takedamage_post);
+}
+
+void client_takedamage_post(int victim, int attacker, int inflictor, float damage, int damagetype)
+{
+	if(attacker < 1 || attacker > MaxClients) {
+		return;
+	}
+
+	/*if(damage == 666.0) {
+		if(current_evento != -1) {
+			if(current_state == EVENTO_STATE_IN_PROGRESS ||
+				current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
+				if(participando[attacker]) {
+					EventoInfo eventoinfo;
+					evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+
+					if(achiv_hhh != Achievement_Null) {
+						achiv_hhh.Award(attacker);
+					}
+				}
+			}
+		}
+	}*/
 }
 
 static bool handle_time(int &secs, int num, char timestr[TIME_STR_MAX], const char[] singular, const char[] plural)
@@ -1554,12 +1620,7 @@ static int evento_explain_menu_handler(Menu menu, MenuAction action, int param1,
 		}
 	} else if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
-			char intstr[INT_STR_MAX];
-			menu.GetItem(0, intstr, INT_STR_MAX);
-
-			int idx = StringToInt(intstr);
-
-			explain_menu(param1, idx);
+			explain_menu(param1);
 		}
 	}
 
@@ -1639,22 +1700,14 @@ static int explain_menu_handler(Menu menu, MenuAction action, int param1, int pa
 	return 0;
 }
 
-static void explain_menu(int client, int item)
+static void explain_menu(int client)
 {
-	if(item == -1) {
-		explainmenu.Display(client, MENU_TIME_FOREVER);
-	} else {
-		explainmenu.DisplayAt(client, item, MENU_TIME_FOREVER);
-	}
+	explainmenu.Display(client, MENU_TIME_FOREVER);
 }
 
-static void rank_menu(int client, int item)
+static void rank_menu(int client)
 {
-	if(item == -1) {
-		rankmenu.Display(client, MENU_TIME_FOREVER);
-	} else {
-		rankmenu.DisplayAt(client, item, MENU_TIME_FOREVER);
-	}
+	rankmenu.Display(client, MENU_TIME_FOREVER);
 }
 
 static Action sm_rankevento(int client, int args)
@@ -1665,7 +1718,7 @@ static Action sm_rankevento(int client, int args)
 	}
 
 	if(current_evento == -1) {
-		rank_menu(client, -1);
+		rank_menu(client);
 	} else {
 		display_ranking_menu(client, current_evento);
 	}
@@ -1686,7 +1739,7 @@ static Action sm_explain(int client, int args)
 	}
 
 	if(current_evento == -1) {
-		explain_menu(client, -1);
+		explain_menu(client);
 	} else {
 		evento_explain_menu(client, current_evento);
 	}
@@ -1710,7 +1763,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 
 	if(!death) {
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-				current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
+			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(value) {
 				handle_player(client, info);
 
@@ -1775,23 +1828,27 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 		player = GetClientOfUserId(player);
 		if(player == 0) {
 			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
-			players_menu(param1, idx);
+			players_menu(param1, idx, true);
 			return 0;
 		}
 
+		menu.GetItem(param2, intstr, INT_STR_MAX);
+		param2 = StringToInt(intstr);
+
 		switch(param2) {
-			case 2:
+			case 0:
 			{ set_participando(player, false); }
-			case 3:
+			case 1:
 			{ vencedor[player] = !vencedor[player]; }
-			case 4:
-			{
+			case 2: {
 				end_evento_with_player(player);
 				return 0;
 			}
+			case 3:
+			{ set_participando(player, true); }
 		}
 
-		players_menu(param1, idx);
+		players_menu(param1, idx, true);
 	} else if(action == MenuAction_DisplayItem) {
 		if(param2 == 0 || param2 == 1) {
 			return RedrawMenuItem("");
@@ -1804,7 +1861,7 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 		if(player == 0) {
 			int idx = StringToInt(intstr);
 			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
-			players_menu(param1, idx);
+			players_menu(param1, idx, true);
 			return 0;
 		}
 
@@ -1823,6 +1880,8 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 			}
 			case 2:
 			{ return RedrawMenuItem("terminar com ele"); }
+			case 3:
+			{ return RedrawMenuItem("adicionar"); }
 		}
 	} else if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
@@ -1830,7 +1889,7 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 			menu.GetItem(1, intstr, INT_STR_MAX);
 			int idx = StringToInt(intstr);
 
-			players_menu(param1, idx);
+			players_menu(param1, idx, true);
 		}
 	} else if(action == MenuAction_End) {
 		delete menu;
@@ -1855,11 +1914,15 @@ static void player_menu(int client, int player, int idx)
 	IntToString(idx, intstr, INT_STR_MAX);
 	menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
 
-	menu.AddItem("0", "remover");
-	if(current_state == EVENTO_STATE_IN_PROGRESS ||
-		current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-		menu.AddItem("1", "marcar como vencedor");
-		menu.AddItem("3", "terminar com ele");
+	if(participando[player]) {
+		menu.AddItem("0", "remover");
+		if(current_state == EVENTO_STATE_IN_PROGRESS ||
+			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
+			menu.AddItem("1", "marcar como vencedor");
+			menu.AddItem("2", "terminar com ele");
+		}
+	} else {
+		menu.AddItem("3", "adicionar");
 	}
 
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -1872,30 +1935,31 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		menu.GetItem(0, intstr, INT_STR_MAX);
 		int idx = StringToInt(intstr);
 
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-			if(param2 == 1) {
-				for(int i = 1; i <= MaxClients; ++i) {
-					if(!IsClientInGame(i) ||
-						!participando[i]) {
-						continue;
-					}
+		menu.GetItem(param2, intstr, INT_STR_MAX);
 
-					vencedor[i] = true;
+		if(intstr[0] == 'm') {
+			for(int i = 1; i <= MaxClients; ++i) {
+				if(!IsClientInGame(i) ||
+					!participando[i]) {
+					continue;
 				}
 
-				evento_menu(param1, idx);
-				return 0;
+				vencedor[i] = true;
 			}
+
+			evento_menu(param1, idx);
+			return 0;
 		}
 
-		menu.GetItem(param2, intstr, INT_STR_MAX);
 		param2 = StringToInt(intstr);
 		param2 = GetClientOfUserId(param2);
 
 		if(param2 == 0) {
 			CPrintToChat(param1, EVENTO_CHAT_PREFIX ... "O jogador se desconectou");
-			players_menu(param1, idx);
+			char title[15];
+			menu.GetTitle(title, sizeof(title));
+			bool parti = (StrEqual(title, "Particicpantes"));
+			players_menu(param1, idx, parti);
 		} else {
 			player_menu(param1, param2, idx);
 		}
@@ -1904,17 +1968,20 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 			return ITEMDRAW_IGNORE;
 		}
 
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-			if(param2 == 1) {
-				return ITEMDRAW_DEFAULT;
-			} else if(param2 == 2) {
-				return ITEMDRAW_SPACER;
-			}
-		}
-
 		char intstr[INT_STR_MAX];
 		menu.GetItem(param2, intstr, INT_STR_MAX);
+
+		switch(intstr[0]) {
+			case 'i':
+			{ return ITEMDRAW_IGNORE; }
+			case 's':
+			{ return ITEMDRAW_SPACER; }
+			case 'm':
+			{ return ITEMDRAW_DEFAULT; }
+			case 'n':
+			{ return ITEMDRAW_DISABLED; }
+		}
+
 		param2 = StringToInt(intstr);
 		param2 = GetClientOfUserId(param2);
 
@@ -1928,17 +1995,18 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 			return RedrawMenuItem("");
 		}
 
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-			if(param2 == 2) {
-				return RedrawMenuItem("");
-			} else if(param2 == 1) {
-				return RedrawMenuItem("marcar todos como vencedores");
-			}
-		}
-
 		char intstr[INT_STR_MAX];
 		menu.GetItem(param2, intstr, INT_STR_MAX);
+
+		switch(intstr[0]) {
+			case 'i', 's':
+			{ return RedrawMenuItem(""); }
+			case 'm':
+			{ return RedrawMenuItem("marcar todos como vencedores"); }
+			case 'n':
+			{ return RedrawMenuItem("<<nenhum jogador>>"); }
+		}
+
 		param2 = StringToInt(intstr);
 		param2 = GetClientOfUserId(param2);
 
@@ -1964,44 +2032,51 @@ static int players_menu_handler(Menu menu, MenuAction action, int param1, int pa
 	return 0;
 }
 
-static void players_menu(int client, int idx)
+static void players_menu(int client, int idx, bool parti)
 {
-	int num_clients = 0;
-	int[] clients = new int[MaxClients];
+	Menu menu = new Menu(players_menu_handler, MENU_ACTIONS_DEFAULT|MenuAction_DisplayItem|MenuAction_DrawItem);
+	if(parti) {
+		menu.SetTitle("Particicpantes");
+	} else {
+		menu.SetTitle("Nao particicpantes");
+	}
+	menu.ExitBackButton = true;
+
+	char intstr[INT_STR_MAX];
+	IntToString(idx, intstr, INT_STR_MAX);
+	menu.AddItem(intstr, "i", ITEMDRAW_IGNORE);
+
+	if(parti) {
+		if(current_state == EVENTO_STATE_IN_PROGRESS ||
+			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
+			menu.AddItem("m", "marcar todos como vencedores");
+			menu.AddItem("s", "", ITEMDRAW_SPACER);
+		}
+	}
+
+	int num_added = 0;
 
 	for(int i = 1; i <= MaxClients; ++i) {
-		if(!IsClientInGame(i) ||
-			!participando[i]) {
+		if(!IsClientInGame(i)) {
 			continue;
 		}
 
-		clients[num_clients++] = i;
-	}
-
-	if(num_clients > 0) {
-		Menu menu = new Menu(players_menu_handler, MENU_ACTIONS_DEFAULT|MenuAction_DisplayItem|MenuAction_DrawItem);
-		menu.SetTitle("Particicpantes");
-		menu.ExitBackButton = true;
-
-		char intstr[INT_STR_MAX];
-		IntToString(idx, intstr, INT_STR_MAX);
-		menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
-
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-			menu.AddItem("", "marcar todos como vencedores");
-			menu.AddItem("", "", ITEMDRAW_SPACER);
+		if(parti && !participando[i]) {
+			continue;
+		} else if(!parti && participando[i]) {
+			continue;
 		}
 
-		for(int i = 0; i < num_clients; ++i) {
-			IntToString(GetClientUserId(clients[i]), intstr, INT_STR_MAX);
-			menu.AddItem(intstr, "player");
-		}
-
-		menu.Display(client, MENU_TIME_FOREVER);
-	} else {
-		evento_menu(client, current_evento);
+		IntToString(GetClientUserId(i), intstr, INT_STR_MAX);
+		menu.AddItem(intstr, "player");
+		++num_added;
 	}
+
+	if(num_added == 0) {
+		menu.AddItem("n", "<<nenhum jogador>>", ITEMDRAW_DISABLED);
+	}
+
+	menu.Display(client, MENU_TIME_FOREVER);
 }
 
 static int winner_menu_handler(Menu menu, MenuAction action, int param1, int param2)
@@ -2086,14 +2161,20 @@ static int winners_menu_handler(Menu menu, MenuAction action, int param1, int pa
 	} else if(action == MenuAction_DrawItem) {
 		if(param2 == 0) {
 			return ITEMDRAW_IGNORE;
-		} else if(param2 == 1) {
-			return ITEMDRAW_DEFAULT;
-		} else if(param2 == 2) {
-			return ITEMDRAW_SPACER;
 		}
 
 		char intstr[INT_STR_MAX];
 		menu.GetItem(param2, intstr, INT_STR_MAX);
+
+		switch(intstr[0]) {
+			case 's':
+			{ return ITEMDRAW_SPACER; }
+			case 't':
+			{ return ITEMDRAW_DEFAULT; }
+			case 'n':
+			{ return ITEMDRAW_DISABLED; }
+		}
+
 		param2 = StringToInt(intstr);
 		param2 = GetClientOfUserId(param2);
 
@@ -2103,14 +2184,22 @@ static int winners_menu_handler(Menu menu, MenuAction action, int param1, int pa
 			return ITEMDRAW_DEFAULT;
 		}
 	} else if(action == MenuAction_DisplayItem) {
-		if(param2 == 0 || param2 == 2) {
+		if(param2 == 0) {
 			return RedrawMenuItem("");
-		} else if(param2 == 1) {
-			return RedrawMenuItem("terminar");
 		}
 
 		char intstr[INT_STR_MAX];
 		menu.GetItem(param2, intstr, INT_STR_MAX);
+
+		switch(intstr[0]) {
+			case 't':
+			{ return RedrawMenuItem("terminar"); }
+			case 'n':
+			{ return RedrawMenuItem("<<nenhum jogador>>"); }
+			case 's':
+			{ return RedrawMenuItem(""); }
+		}
+
 		param2 = StringToInt(intstr);
 		param2 = GetClientOfUserId(param2);
 
@@ -2138,8 +2227,18 @@ static int winners_menu_handler(Menu menu, MenuAction action, int param1, int pa
 
 static void winners_menu(int client, int idx)
 {
-	int num_clients = 0;
-	int[] clients = new int[MaxClients];
+	Menu menu = new Menu(winners_menu_handler, MENU_ACTIONS_DEFAULT|MenuAction_DisplayItem|MenuAction_DrawItem);
+	menu.SetTitle("Marcados para vencer");
+	menu.ExitBackButton = true;
+
+	char intstr[INT_STR_MAX];
+	IntToString(idx, intstr, INT_STR_MAX);
+	menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
+
+	menu.AddItem("t", "terminar");
+	menu.AddItem("s", "", ITEMDRAW_SPACER);
+
+	int num_added = 0;
 
 	for(int i = 1; i <= MaxClients; ++i) {
 		if(!IsClientInGame(i) ||
@@ -2147,30 +2246,16 @@ static void winners_menu(int client, int idx)
 			continue;
 		}
 
-		clients[num_clients++] = i;
+		IntToString(GetClientUserId(i), intstr, INT_STR_MAX);
+		menu.AddItem(intstr, "player");
+		++num_added;
 	}
 
-	if(num_clients > 0) {
-		Menu menu = new Menu(winners_menu_handler, MENU_ACTIONS_DEFAULT|MenuAction_DisplayItem|MenuAction_DrawItem);
-		menu.SetTitle("Marcados para vencer");
-		menu.ExitBackButton = true;
-
-		char intstr[INT_STR_MAX];
-		IntToString(idx, intstr, INT_STR_MAX);
-		menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
-
-		menu.AddItem("", "terminar");
-		menu.AddItem("", "", ITEMDRAW_SPACER);
-
-		for(int i = 0; i < num_clients; ++i) {
-			IntToString(GetClientUserId(clients[i]), intstr, INT_STR_MAX);
-			menu.AddItem(intstr, "player");
-		}
-
-		menu.Display(client, MENU_TIME_FOREVER);
-	} else {
-		evento_menu(client, current_evento);
+	if(num_added == 0) {
+		menu.AddItem("n", "<<nenhum jogador>>", ITEMDRAW_DISABLED);
 	}
+
+	menu.Display(client, MENU_TIME_FOREVER);
 }
 
 static void stop_countdown()
@@ -2210,6 +2295,8 @@ static void clear_evento_vars()
 
 		set_participando(i, false);
 	}
+
+	nukealguemorreu = false;
 
 	evento_secs = 0;
 	stop_countdown();
@@ -2322,6 +2409,32 @@ static void end_evento()
 
 		DoAchievementEffects(i);
 
+		if(achiv_rei1 != Achievement_Null) {
+			achiv_rei1.Award(i);
+		}
+
+		if(StrEqual(eventoinfo.name, "MGE")) {
+			if(achiv_nezay != Achievement_Null) {
+				achiv_nezay.AwardProgress(i, 1);
+			}
+		} else if(StrEqual(eventoinfo.name, "Parkour")) {
+			if(achiv_parkour != Achievement_Null) {
+				achiv_parkour.Award(i);
+			}
+		} else if(StrEqual(eventoinfo.name, "Color Wars") ||
+					StrEqual(eventoinfo.name, "Dodgeball") ||
+					StrEqual(eventoinfo.name, "Pega a Dispenser!")) {
+			if(achiv_rei5 != Achievement_Null) {
+				achiv_rei5.Award(i);
+			}
+		} else if(StrEqual(eventoinfo.name, "Dice") ||
+					StrEqual(eventoinfo.name, "Pedra, Papel e Tesoura") ||
+					StrEqual(eventoinfo.name, "Dispenser")) {
+			if(achiv_rng != Achievement_Null) {
+				achiv_rng.Award(i);
+			}
+		}
+
 		CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N ganhou", i);
 
 		TF2_RespawnPlayer(i);
@@ -2367,7 +2480,13 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	if(eventoinfo.team > 0 && eventoinfo.team != team) {
 		team = (eventoinfo.team == 2 ? 3 : 2);
 		ChangeClientTeam(i, team);
+	} else if(team == 3 && (!(teleport_set & BIT_FOR_TEAM(3)) && (teleport_set & BIT_FOR_TEAM(2)))) {
+		ChangeClientTeam(i, 2);
+		team = 2;
 	}
+
+	int usrid = GetClientUserId(i);
+	ServerCommand("sm_mortal #%i", usrid);
 
 	if(teleport_set & BIT_FOR_TEAM(team)) {
 		TeleportEntity(i, teleport[IDX_FOR_TEAM(team)]);
@@ -2698,7 +2817,7 @@ static int evento_menu_handler(Menu menu, MenuAction action, int param1, int par
 				cancel_evento();
 			}
 			case 5: {
-				players_menu(param1, idx);
+				players_menu(param1, idx, true);
 			}
 			case 6: {
 				winners_menu(param1, idx);
@@ -2717,17 +2836,12 @@ static int evento_menu_handler(Menu menu, MenuAction action, int param1, int par
 				end_evento();
 			}
 			case 12: {
-				players_menu(param1, idx);
+				players_menu(param1, idx, false);
 			}
 		}
 	} else if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
-			char intstr[INT_STR_MAX];
-			menu.GetItem(0, intstr, INT_STR_MAX);
-
-			int idx = StringToInt(intstr);
-
-			eventos_menu(param1, idx);
+			eventos_menu(param1);
 		}
 	} else if(action == MenuAction_End) {
 		usando_menu = -1;
@@ -2754,7 +2868,7 @@ static void evento_menu(int client, int idx)
 
 	if(current_evento == idx) {
 		menu.AddItem("5", "participantes");
-		//menu.AddItem("12", "nao participantes");
+		menu.AddItem("12", "nao participantes");
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			menu.AddItem("6", "marcados para vencer");
@@ -2809,7 +2923,7 @@ static int eventos_menu_handler(Menu menu, MenuAction action, int param1, int pa
 	return 0;
 }
 
-static void eventos_menu(int client, int item)
+static void eventos_menu(int client)
 {
 	Menu menu = new Menu(eventos_menu_handler);
 	menu.SetTitle("Eventos");
@@ -2826,11 +2940,7 @@ static void eventos_menu(int client, int item)
 		menu.AddItem(intstr, eventoinfo.name);
 	}
 
-	if(item == -1) {
-		menu.Display(client, MENU_TIME_FOREVER);
-	} else {
-		menu.DisplayAt(client, item, MENU_TIME_FOREVER);
-	}
+	menu.Display(client, MENU_TIME_FOREVER);
 }
 
 static Action sm_mevento(int client, int args)
@@ -2851,7 +2961,7 @@ static Action sm_mevento(int client, int args)
 	}
 
 	if(current_evento == -1) {
-		eventos_menu(client, -1);
+		eventos_menu(client);
 	} else {
 		evento_menu(client, current_evento);
 	}
