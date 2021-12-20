@@ -3092,7 +3092,7 @@ static Action sm_leventos(int client, int args)
 	for(int i = 0; i < len; ++i) {
 		evento_infos.GetArray(i, eventoinfo, sizeof(EventoInfo));
 
-		StrCat(buffer, buffer_len, eventoinfo.name[i]);
+		StrCat(buffer, buffer_len, eventoinfo.name);
 		StrCat(buffer, buffer_len, "\n");
 	}
 
