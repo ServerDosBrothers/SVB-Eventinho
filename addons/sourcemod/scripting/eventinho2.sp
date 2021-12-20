@@ -125,31 +125,42 @@ static Menu rankmenu;
 static int laserbeam;
 static int playersprite[MAXPLAYERS+1] = {INVALID_ENT_REFERENCE, ...};
 static bool nukealguemorreu;
+static Handle timerpodesematar;
+static bool podesematar = true;
+static Handle timer20seg;
+static bool semato[MAXPLAYERS+1];
+static bool morreu[MAXPLAYERS+1];
 static Achievement achiv_rei1 = Achievement_Null;
 static Achievement achiv_rei2 = Achievement_Null;
-static Achievement achiv_rei3 = Achievement_Null;
-static Achievement achiv_rei4 = Achievement_Null;
+//static Achievement achiv_rei3 = Achievement_Null;
+//static Achievement achiv_rei4 = Achievement_Null;
 static Achievement achiv_rei5 = Achievement_Null;
-static Achievement achiv_rei6 = Achievement_Null;
+//static Achievement achiv_rei6 = Achievement_Null;
 static Achievement achiv_rng = Achievement_Null;
 static Achievement achiv_nuke = Achievement_Null;
-static Achievement achiv_hhh = Achievement_Null;
+//static Achievement achiv_hhh = Achievement_Null;
 static Achievement achiv_parkour = Achievement_Null;
 static Achievement achiv_nezay = Achievement_Null;
+static Achievement achiv_bind = Achievement_Null;
+static Achievement achiv_domin = Achievement_Null;
+static Achievement achiv_color = Achievement_Null;
 
 public void OnAchievementsLoaded()
 {
 	achiv_rei1 = Achievement.FindByName("rei iniciante");
 	achiv_rei2 = Achievement.FindByName("rei-streak");
-	achiv_rei3 = Achievement.FindByName("rei supremo");
-	achiv_rei4 = Achievement.FindByName("rei profissional");
+	//achiv_rei3 = Achievement.FindByName("rei supremo");
+	//achiv_rei4 = Achievement.FindByName("rei profissional");
 	achiv_rei5 = Achievement.FindByName("reis unidos");
-	achiv_rei6 = Achievement.FindByName("rei mediano");
+	//achiv_rei6 = Achievement.FindByName("rei mediano");
 	achiv_rng = Achievement.FindByName("rng god");
 	achiv_nuke = Achievement.FindByName("war, war never changes");
-	achiv_hhh = Achievement.FindByName("a-besta-do");
+	//achiv_hhh = Achievement.FindByName("a-besta-do");
 	achiv_parkour = Achievement.FindByName("hardcore parkour");
 	achiv_nezay = Achievement.FindByName("nezay junior");
+	achiv_bind = Achievement.FindByName("bind errada burror");
+	achiv_domin = Achievement.FindByName("tryhard");
+	//achiv_color = Achievement.FindByName("");
 }
 
 static bool parse_classes_str(int &classes, const char[] str, const char[] eventoname)
@@ -936,7 +947,7 @@ static void query_create_rankmenus_impl(Database db, DBResultSet set)
 				if(count >= 5) {
 					if(client != -1) {
 						if(achiv_rei2 != Achievement_Null) {
-							achiv_rei2.Award(client);
+							achiv_rei2.AwardProgress(client, 5);
 						}
 					}
 				}
@@ -1102,6 +1113,8 @@ public void OnPluginStart()
 	HookEvent("player_spawn", player_spawn);
 	HookEvent("player_death", player_death);
 
+	HookEvent("player_domination", player_domination);
+
 	HookEvent("post_inventory_application", post_inventory_application);
 
 	AddMultiTargetFilter("@evento", filter_evento, "Todos participando do evento", false);
@@ -1192,6 +1205,21 @@ static void player_spawn(Event event, const char[] name, bool dontBroadcast)
 	}
 }
 
+static void player_domination(Event event, const char[] name, bool dontBroadcast)
+{
+	int dominator = GetClientOfUserId(event.GetInt("dominator"));
+
+	if(current_evento != -1) {
+		if(current_state == EVENTO_STATE_IN_COUNTDOWN_START ||
+			current_state == EVENTO_STATE_ENDED) {
+
+			if(achiv_domin != Achievement_Null) {
+				achiv_domin.Award(dominator);
+			}
+		}
+	}
+}
+
 static void player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
@@ -1211,6 +1239,17 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 					}
 					nukealguemorreu = true;
 				}
+
+				if(podesematar) {
+					if(!semato[client]) {
+						if(achiv_bind != Achievement_Null) {
+							achiv_bind.Award(client);
+						}
+						semato[client] = true;
+					}
+				}
+
+				morreu[client] = true;
 
 				if(!eventoinfo.respawn) {
 					set_participando(client, false, true);
@@ -1514,6 +1553,9 @@ public void OnClientDisconnected(int client)
 	delete winned_eventos[client];
 	participando[client] = false;
 	vencedor[client] = false;
+
+	morreu[client] = false;
+	semato[client] = false;
 }
 
 static int classes_menu_handler(Menu menu, MenuAction action, int param1, int param2)
@@ -2292,6 +2334,9 @@ static void start_countdown(int secs)
 static void clear_evento_vars()
 {
 	for(int i = 1; i <= MaxClients; ++i) {
+		semato[i] = false;
+		morreu[i] = false;
+
 		if(!IsClientInGame(i) ||
 			!participando[i]) {
 			continue;
@@ -2301,6 +2346,11 @@ static void clear_evento_vars()
 	}
 
 	nukealguemorreu = false;
+
+	delete timerpodesematar;
+	podesematar = true;
+
+	delete timer20seg;
 
 	evento_secs = 0;
 	stop_countdown();
@@ -2510,6 +2560,30 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	CreateTimer(0.2, timer_teleport, GetClientUserId(i));
 }
 
+static Action timer_podesematar(Handle timer, any data)
+{
+	podesematar = false;
+	timerpodesematar = null;
+	return Plugin_Continue;
+}
+
+static Action timer_passo20seg(Handle timer, any data)
+{
+	for(int i = 1; i <= MaxClients; ++i) {
+		if(!participando[i]) {
+			continue;
+		}
+
+		if(!morreu[i]) {
+			if(achiv_color != Achievement_Null) {
+				achiv_color.Award(i);
+			}
+		}
+	}
+	timer20seg = null;
+	return Plugin_Continue;
+}
+
 static void start_evento_queued()
 {
 	stop_countdown();
@@ -2538,6 +2612,14 @@ static void start_evento_queued()
 	}
 
 	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento inciado");
+
+	delete timerpodesematar;
+	timerpodesematar = CreateTimer(1.0, timer_podesematar);
+
+	if(StrEqual(eventoinfo.name, "Corzinha")) {
+		delete timer20seg;
+		timer20seg = CreateTimer(20.0, timer_passo20seg);
+	}
 }
 
 static bool countdown_tick()
