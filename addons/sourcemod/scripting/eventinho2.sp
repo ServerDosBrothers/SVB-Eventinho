@@ -160,7 +160,7 @@ public void OnAchievementsLoaded()
 	achiv_nezay = Achievement.FindByName("nezay junior");
 	achiv_bind = Achievement.FindByName("bind errada burror");
 	achiv_domin = Achievement.FindByName("tryhard");
-	//achiv_color = Achievement.FindByName("");
+	achiv_color = Achievement.FindByName("daltonico");
 }
 
 static bool parse_classes_str(int &classes, const char[] str, const char[] eventoname)
