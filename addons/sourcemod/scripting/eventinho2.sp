@@ -225,7 +225,9 @@ static void build_classes_str(int classes, char debugclassesvalue[EVENTO_CLASSES
 		len += 8 + 1;
 	}
 
-	debugclassesvalue[len-1] = '\0';
+	if(len > 0) {
+		debugclassesvalue[len-1] = '\0';
+	}
 }
 #endif
 
@@ -382,6 +384,8 @@ static void load_eventos()
 				eventinfo.min_players = kvEventos.GetNum("min_players");
 
 				bool valid = true;
+
+				classesvalue[0] = '\0';
 
 				if(kvEventos.JumpToKey("classes_whitelist")) {
 					if(kvEventos.JumpToKey("classes_blacklist")) {
@@ -1329,10 +1333,10 @@ static Action sm_evento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	set_participando(client, !participando[client]);
-
 	EventoInfo eventoinfo;
 	evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+
+	set_participando_ex(client, !participando[client], eventoinfo);
 
 	if(participando[client]) {
 		evento_explain_menu(client, current_evento);
@@ -2462,6 +2466,21 @@ static void start_evento_now(int idx)
 	start_evento_queued();
 }
 
+static Action timer_teleport(Handle timer, int client)
+{
+	client = GetClientOfUserId(client);
+	if(client == 0) {
+		return Plugin_Continue;
+	}
+
+	int team = GetClientTeam(client);
+	if(teleport_set & BIT_FOR_TEAM(team)) {
+		TeleportEntity(client, teleport[IDX_FOR_TEAM(team)]);
+	}
+
+	return Plugin_Continue;
+}
+
 static void handle_player(int i, EventoInfo eventoinfo)
 {
 	int class = view_as<int>(TF2_GetPlayerClass(i));
@@ -2480,17 +2499,15 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	if(eventoinfo.team > 0 && eventoinfo.team != team) {
 		team = (eventoinfo.team == 2 ? 3 : 2);
 		ChangeClientTeam(i, team);
-	} else if(team == 3 && (!(teleport_set & BIT_FOR_TEAM(3)) && (teleport_set & BIT_FOR_TEAM(2)))) {
-		ChangeClientTeam(i, 2);
+	} else if(team == 3 && ((!(teleport_set & BIT_FOR_TEAM(3))) && (teleport_set & BIT_FOR_TEAM(2)))) {
 		team = 2;
+		ChangeClientTeam(i, team);
 	}
 
 	int usrid = GetClientUserId(i);
 	ServerCommand("sm_mortal #%i", usrid);
 
-	if(teleport_set & BIT_FOR_TEAM(team)) {
-		TeleportEntity(i, teleport[IDX_FOR_TEAM(team)]);
-	}
+	CreateTimer(0.2, timer_teleport, GetClientUserId(i));
 }
 
 static void start_evento_queued()
