@@ -308,7 +308,7 @@ static void unload_eventos()
 {
 	for(int i = 1; i <= MaxClients; ++i) {
 		if(IsClientInGame(i)) {
-			OnClientDisconnected(i);
+			OnClientDisconnect(i);
 		}
 	}
 
@@ -687,6 +687,7 @@ static void delete_reward_ents(int client)
 
 		if(entity != -1) {
 			TF2_RemoveWearable(client, entity);
+			RemoveEntity(entity);
 		}
 	}
 
@@ -1534,7 +1535,7 @@ public void OnPluginEnd()
 	}
 }
 
-public void OnClientDisconnected(int client)
+public void OnClientDisconnect(int client)
 {
 	if(client == usando_menu) {
 		usando_menu = -1;
@@ -2337,8 +2338,7 @@ static void clear_evento_vars()
 		semato[i] = false;
 		morreu[i] = false;
 
-		if(!IsClientInGame(i) ||
-			!participando[i]) {
+		if(!IsClientInGame(i)) {
 			continue;
 		}
 
@@ -2548,11 +2548,12 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	int team = GetClientTeam(i);
 	if(eventoinfo.team > 0 && eventoinfo.team != team) {
 		team = (eventoinfo.team == 2 ? 3 : 2);
-		ChangeClientTeam(i, team);
 	} else if(team == 3 && ((!(teleport_set & BIT_FOR_TEAM(3))) && (teleport_set & BIT_FOR_TEAM(2)))) {
 		team = 2;
-		ChangeClientTeam(i, team);
 	}
+
+	//ChangeClientTeam(i, team);
+	TeamManager_SetEntityTeam(i, team, false);
 
 	int usrid = GetClientUserId(i);
 	ServerCommand("sm_mortal #%i", usrid);
