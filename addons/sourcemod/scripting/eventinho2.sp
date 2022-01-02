@@ -1806,6 +1806,8 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 		}
 	}
 
+	bool tava_participando = participando[client];
+
 	participando[client] = value;
 
 	if(!death) {
@@ -1839,7 +1841,9 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 
 				playersprite[client] = EntIndexToEntRef(entity);
 			} else {
-				TF2_RespawnPlayer(client);
+				if(tava_participando) {
+					TF2_RespawnPlayer(client);
+				}
 			}
 		}
 	}
@@ -2558,7 +2562,7 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	int usrid = GetClientUserId(i);
 	ServerCommand("sm_mortal #%i", usrid);
 
-	CreateTimer(0.2, timer_teleport, GetClientUserId(i));
+	CreateTimer(0.2, timer_teleport, usrid);
 }
 
 static Action timer_podesematar(Handle timer, any data)
