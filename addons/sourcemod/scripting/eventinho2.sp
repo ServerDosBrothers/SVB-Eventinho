@@ -2622,7 +2622,9 @@ static void start_evento_queued()
 	timerpodesematar = CreateTimer(1.0, timer_podesematar);
 
 	if(StrEqual(eventoinfo.name, "Corzinha")) {
-		delete timer20seg;
+		if(timer20seg != null) {
+			KillTimer(timer20seg);
+		}
 		timer20seg = CreateTimer(20.0, timer_passo20seg);
 	}
 }
