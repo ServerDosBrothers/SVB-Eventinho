@@ -8,6 +8,7 @@
 #include <tf2items>
 #include <achivmissions>
 #include <tf2utils>
+#include <svb-godmode>
 
 //#define DEBUG
 
@@ -2596,9 +2597,9 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	//ChangeClientTeam(i, team);
 	TeamManager_SetEntityTeam(i, team, false);
 
-	int usrid = GetClientUserId(i);
-	ServerCommand("sm_mortal #%i", usrid);
+	SVBGodMode_SetClientState(i, GodState_Mortal);
 
+	int usrid = GetClientUserId(i);
 	CreateTimer(0.2, timer_teleport, usrid);
 }
 
