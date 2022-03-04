@@ -3290,15 +3290,15 @@ static Action sm_fevento(int client, int args)
 
 	if(tn_is_ml) {
 		if(should_participate) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%t foi/foram forçado(s) a participar do evento", target_name);
+			CShowActivity2(client, EVENTO_CHAT_PREFIX, "%t foi/foram forçado(s) a participar do evento", target_name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%t foi/foram forçado(s) a sair do evento", target_name);
+			CShowActivity2(client, EVENTO_CHAT_PREFIX, "%t foi/foram forçado(s) a sair do evento", target_name);
 		}
 	} else {
 		if(should_participate) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%s foi/foram forçado(s) a participar do evento", target_name);
+			CShowActivity2(client, EVENTO_CHAT_PREFIX, "%s foi/foram forçado(s) a participar do evento", target_name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%s foi/foram forçado(s) a sair do evento", target_name);
+			CShowActivity2(client, EVENTO_CHAT_PREFIX, "%s foi/foram forçado(s) a sair do evento", target_name);
 		}
 	}
 
