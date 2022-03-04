@@ -1863,6 +1863,8 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 			}
 		}
 	}
+
+	show_participating_hud(client);
 }
 
 static void set_participando(int client, bool value, bool death = false)
