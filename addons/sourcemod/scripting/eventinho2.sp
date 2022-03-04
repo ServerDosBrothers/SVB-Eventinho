@@ -1859,6 +1859,26 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 				playersprite[client] = EntIndexToEntRef(entity);
 			} else {
 				if(tava_participando) {
+					// move the player to the team that has less players
+					int blue_count = 0;
+					int red_count = 0;
+					for(int i = 1; i <= MaxClients; i++) {
+						if(!IsClientInGame(i)) {
+							continue;
+						}
+						TFTeam team = TF2_GetClientTeam(i);
+						if(team == TFTeam_Red) {
+							red_count++;
+						} else if(team == TFTeam_Blue) {
+							blue_count++;
+						}
+					}
+					if(red_count < blue_count) {
+						TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Red), false);
+					} else {
+						TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Blue), false);
+					}
+
 					TF2_RespawnPlayer(client);
 				}
 			}
