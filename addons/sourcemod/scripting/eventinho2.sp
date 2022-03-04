@@ -2632,6 +2632,10 @@ static void start_evento_queued()
 		}
 	}
 
+	if((teleport_set & BIT_FOR_TEAM(2)) && (teleport_set & BIT_FOR_TEAM(3))) {
+		split_participants();
+	}
+
 	for(int i = 1; i <= MaxClients; ++i) {
 		if(!IsClientInGame(i) ||
 			!participando[i]) {
@@ -2651,6 +2655,44 @@ static void start_evento_queued()
 			KillTimer(timer20seg);
 		}
 		timer20seg = CreateTimer(20.0, timer_passo20seg);
+	}
+}
+
+static void split_participants() {
+	ArrayList participants = get_participants();
+	shuffle_cell_list(participants);
+
+	for(int i = 0; i < participants.Length; i++) {
+		int client = participants.Get(i);
+		TFTeam new_team = i % 2 == 0 ? TFTeam_Red :TFTeam_Blue;
+		TeamManager_SetEntityTeam(client, view_as<int>(new_team), false);
+	}
+
+	delete participants;
+}
+
+static ArrayList get_participants() {
+	ArrayList participants = new ArrayList();
+	for(int i = 1; i <= MaxClients; i++) {
+		if(IsClientInGame(i) && participando[i]) {
+			participants.Push(i);
+		}
+	}
+	return participants;
+}
+
+static void shuffle_cell_list(ArrayList list) {
+	int len = list.Length;
+
+	if(len <= 1) {
+		return;
+	}
+
+	for(int i = 0; i < len - 1; i++) {
+		int element = list.Get(i);
+		int swap_idx = GetRandomInt(i, len - 1);
+		list.Set(i, list.Get(swap_idx));
+		list.Set(swap_idx, element);
 	}
 }
 
