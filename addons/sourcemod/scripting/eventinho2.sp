@@ -1108,6 +1108,7 @@ public void OnPluginStart()
 	RegAdminCmd("sm_leventos", sm_leventos, ADMFLAG_ROOT);
 	RegAdminCmd("sm_reventos", sm_reventos, ADMFLAG_ROOT);
 	RegAdminCmd("sm_split", sm_split, ADMFLAG_ROOT);
+	RegAdminCmd("sm_fevento", sm_fevento, ADMFLAG_ROOT);
 
 	RegAdminCmd("sm_mevento", sm_mevento, ADMFLAG_ROOT);
 
@@ -3228,6 +3229,55 @@ static Action sm_split(int client, int args)
 	}
 
 	CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Split realizado com sucesso");
+
+	return Plugin_Handled;
+}
+
+static Action sm_fevento(int client, int args)
+{
+	if(current_evento == -1) {
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento em andamento");
+		return Plugin_Handled;
+	}
+
+	if(args != 2) {
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Use: sm_fevento <alvo> <1/0>");
+		return Plugin_Handled;
+	}
+
+	char target[MAX_TARGET_LENGTH];
+	GetCmdArg(1, target, sizeof(target));
+
+	bool should_participate = !!GetCmdArgInt(2);
+
+	char target_name[MAX_TARGET_LENGTH];
+	int target_list[MAXPLAYERS];
+	bool tn_is_ml;
+
+	int target_count = ProcessTargetString(target, client, target_list, MAXPLAYERS, COMMAND_FILTER_CONNECTED, target_name, sizeof(target_name), tn_is_ml);
+	if(target_count == 0) {
+		ReplyToTargetError(client, target_count);
+		return Plugin_Handled;
+	}
+
+	for(int i = 0; i < target_count; i++) {
+		int target_client = target_list[i];
+		set_participando(target_client, should_participate);
+	}
+
+	if(tn_is_ml) {
+		if(should_participate) {
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%t foi/foram forçado(s) a participar do evento", target_name);
+		} else {
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%t foi/foram forçado(s) a sair do evento", target_name);
+		}
+	} else {
+		if(should_participate) {
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%s foi/foram forçado(s) a participar do evento", target_name);
+		} else {
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "%s foi/foram forçado(s) a sair do evento", target_name);
+		}
+	}
 
 	return Plugin_Handled;
 }
