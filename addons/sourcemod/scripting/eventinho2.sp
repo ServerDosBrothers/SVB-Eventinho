@@ -1107,6 +1107,7 @@ public void OnPluginStart()
 
 	RegAdminCmd("sm_leventos", sm_leventos, ADMFLAG_ROOT);
 	RegAdminCmd("sm_reventos", sm_reventos, ADMFLAG_ROOT);
+	RegAdminCmd("sm_split", sm_split, ADMFLAG_ROOT);
 
 	RegAdminCmd("sm_mevento", sm_mevento, ADMFLAG_ROOT);
 
@@ -2549,6 +2550,12 @@ static Action timer_teleport(Handle timer, int client)
 		return Plugin_Continue;
 	}
 
+	teleport_player_to_event(client);
+
+	return Plugin_Continue;
+}
+
+bool teleport_player_to_event(int client) {
 	if(!IsPlayerAlive(client)) {
 		TF2_RespawnPlayer(client);
 	}
@@ -2556,9 +2563,10 @@ static Action timer_teleport(Handle timer, int client)
 	int team = GetClientTeam(client);
 	if(teleport_set & BIT_FOR_TEAM(team)) {
 		TeleportEntity(client, teleport[IDX_FOR_TEAM(team)]);
+		return true;
 	}
 
-	return Plugin_Continue;
+	return false;
 }
 
 static void handle_player(int i, EventoInfo eventoinfo)
@@ -3193,6 +3201,33 @@ static Action sm_leventos(int client, int args)
 	}
 
 	PrintToConsole(client, "%s", buffer);
+
+	return Plugin_Handled;
+}
+
+static Action sm_split(int client, int args)
+{
+	if(current_evento == -1) {
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento em andamento");
+		return Plugin_Handled;
+	}
+
+	split_participants();
+
+	for(int i = 1; i <= MaxClients; i++) {
+		if(!IsClientInGame(i) || !participando[i]) {
+			continue;
+		}
+
+		int team = GetClientTeam(i);
+		if(teleport_set & BIT_FOR_TEAM(team)) {
+			teleport_player_to_event(i);
+		}
+
+		CPrintToChat(i, EVENTO_CHAT_PREFIX ... "Os participantes foram divididos em times por um administrador. Seu time agora é %s.", team == 2 ? "RED" : "BLU");
+	}
+
+	CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Split realizado com sucesso");
 
 	return Plugin_Handled;
 }
