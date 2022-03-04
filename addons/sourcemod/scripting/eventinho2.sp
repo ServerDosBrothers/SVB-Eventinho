@@ -1885,7 +1885,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 					int blue_count = 0;
 					int red_count = 0;
 					for(int i = 1; i <= MaxClients; i++) {
-						if(!IsClientInGame(i)) {
+						if(!IsClientInGame(i) || participando[i]) {
 							continue;
 						}
 						TFTeam team = TF2_GetClientTeam(i);
