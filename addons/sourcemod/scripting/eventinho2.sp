@@ -2526,7 +2526,7 @@ static Action timer_teleport(Handle timer, int client)
 	if(client == 0) {
 		return Plugin_Continue;
 	}
-	
+
 	if(!IsPlayerAlive(client)) {
 		TF2_RespawnPlayer(client);
 	}
@@ -2595,7 +2595,6 @@ static Action timer_passo20seg(Handle timer, any data)
 
 static void start_evento_queued()
 {
-	stop_countdown();
 	current_state = EVENTO_STATE_IN_PROGRESS;
 
 	EventoInfo eventoinfo;
