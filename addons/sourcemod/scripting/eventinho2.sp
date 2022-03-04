@@ -2526,6 +2526,10 @@ static Action timer_teleport(Handle timer, int client)
 	if(client == 0) {
 		return Plugin_Continue;
 	}
+	
+	if(!IsPlayerAlive(client)) {
+		TF2_RespawnPlayer(client);
+	}
 
 	int team = GetClientTeam(client);
 	if(teleport_set & BIT_FOR_TEAM(team)) {
