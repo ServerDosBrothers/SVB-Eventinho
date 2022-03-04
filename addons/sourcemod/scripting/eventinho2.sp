@@ -104,6 +104,7 @@ enum struct ChatListenInfo
 static ArrayList evento_infos;
 static StringMap eventoidmap;
 static Handle hud;
+static Handle hud_participating;
 static int current_evento = -1;
 static EventoState current_state = EVENTO_STATE_ENDED;
 static int evento_secs;
@@ -1204,6 +1205,17 @@ static void player_spawn(Event event, const char[] name, bool dontBroadcast)
 			}
 		}
 	}
+
+	CreateTimer(1.0, timer_show_participating_hud, GetClientUserId(client));
+}
+
+static Action timer_show_participating_hud(Handle timer, int userid) {
+	int client = GetClientOfUserId(userid);
+	if(client == 0) {
+		return Plugin_Handled;
+	}
+	show_participating_hud(client);
+	return Plugin_Handled;
 }
 
 static void player_domination(Event event, const char[] name, bool dontBroadcast)
@@ -1395,6 +1407,8 @@ static Action sm_evento(int client, int args)
 			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não vai mais participar do evento %s", eventoinfo.name);
 		}
 	}
+
+	show_participating_hud(client);
 
 	return Plugin_Handled;
 }
@@ -2322,9 +2336,11 @@ static void stop_countdown()
 				continue;
 			}
 			ClearSyncHud(i, hud);
+			ClearSyncHud(i, hud_participating);
 		}
 	}
 	delete hud;
+	delete hud_participating;
 }
 
 static void start_countdown(int secs)
@@ -2333,6 +2349,12 @@ static void start_countdown(int secs)
 	evento_secs = secs;
 	if(!countdown_tick()) {
 		countdown_handle = CreateTimer(1.0, timer_countdown, 0, TIMER_REPEAT);
+	}
+	hud_participating = CreateHudSynchronizer();
+	for(int i = 1; i <= MaxClients; i++) {
+		if(IsClientInGame(i)) {
+			show_participating_hud(i);
+		}
 	}
 }
 
@@ -2667,6 +2689,28 @@ static bool countdown_tick()
 		}
 	}
 	return false;
+}
+
+static void show_participating_hud(int client) {
+	if(!hud_participating) {
+		return;
+	}
+
+	ClearSyncHud(client, hud_participating);
+
+	if(current_state != EVENTO_STATE_IN_COUNTDOWN_START) {
+		return;
+	}
+
+	float hold_time = float(evento_secs);
+
+	if(participando[client]) {
+		SetHudTextParams(0.05, 0.15, hold_time, 0, 255, 0, 255);
+		ShowSyncHudText(client, hud_participating, "Você está participando");
+	} else {
+		SetHudTextParams(0.05, 0.15, hold_time, 255, 0, 0, 255);
+		ShowSyncHudText(client, hud_participating, "Digite !evento para participar");
+	}
 }
 
 static Action timer_countdown(Handle timer, any data)
