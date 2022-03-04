@@ -8,6 +8,8 @@
 #include <tf2items>
 #include <achivmissions>
 #include <tf2utils>
+
+#undef REQUIRE_PLUGIN
 #include <svb-godmode>
 
 //#define DEBUG
@@ -132,6 +134,7 @@ static bool podesematar = true;
 static Handle timer20seg;
 static bool semato[MAXPLAYERS+1];
 static bool morreu[MAXPLAYERS+1];
+static bool godmode_loaded = false;
 static Achievement achiv_rei1 = Achievement_Null;
 static Achievement achiv_rei2 = Achievement_Null;
 //static Achievement achiv_rei3 = Achievement_Null;
@@ -1138,6 +1141,25 @@ public void OnPluginStart()
 	}
 
 	OnAchievementsLoaded();
+}
+
+public void OnAllPluginsLoaded()
+{
+	godmode_loaded = LibraryExists("svb-godmode");
+}
+
+public void OnLibraryAdded(const char[] name)
+{
+	if(StrEqual(name, "svb-godmode")) {
+		godmode_loaded = true;
+	}
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+	if(StrEqual(name, "svb-godmode")) {
+		godmode_loaded = false;
+	}
 }
 
 static bool filter_evento(const char[] filter, ArrayList clients)
@@ -2617,7 +2639,9 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	//ChangeClientTeam(i, team);
 	TeamManager_SetEntityTeam(i, team, false);
 
-	SVBGodMode_SetClientState(i, GodState_Mortal);
+	if(godmode_loaded) {
+		SVBGodMode_SetClientState(i, GodState_Mortal);
+	}
 
 	int usrid = GetClientUserId(i);
 	CreateTimer(0.2, timer_teleport, usrid);
