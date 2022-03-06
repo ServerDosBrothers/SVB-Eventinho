@@ -117,6 +117,8 @@
 			"0" "Os jogadores devem chegar no final do corredor sem que o STAFF O VEJA CORRENDO\nNão vale a luva de velocidade"
 		}
 
+		"respawn" "1"
+
 		"classes_whitelist" "heavy"
 
 		"coroa_unusual" "10.0"
@@ -165,6 +167,8 @@
 		{
 			"0" "O primeiro que terminar o percurso de parkour ganha."
 		}
+
+		"respawn" "1"
 
 		"coroa_unusual" "44.0"
 	}
