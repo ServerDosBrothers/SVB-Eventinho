@@ -11,6 +11,7 @@
 
 #undef REQUIRE_PLUGIN
 #include <svb-godmode>
+#include <svb-randomcrits>
 
 //#define DEBUG
 
@@ -1376,6 +1377,28 @@ public Action TeamManager_CanChangeTeam(int entity, int team)
 	return Plugin_Continue;
 }
 
+public Action SVB_OnRandomCrit(int client, int weapon)
+{
+	if(current_evento_idx == -1) {
+		return Plugin_Continue;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS &&
+		current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return Plugin_Continue;
+	}
+
+	if(!participando[client]) {
+		return Plugin_Continue;
+	}
+
+	if(current_config.random_crits) {
+		return Plugin_Continue;
+	}
+
+	return Plugin_Stop;
+}
+
 static bool is_class_valid(EventoInfo eventoinfo, int class)
 {
 	bool valid = true;
@@ -1516,7 +1539,35 @@ public void OnClientPutInServer(int client)
 	}
 
 	SDKHook(client, SDKHook_PostThinkPost, client_post_think_post);
+	SDKHook(client, SDKHook_OnTakeDamage, client_takedamage);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, client_takedamage_post);
+}
+
+Action client_takedamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int custom)
+{
+	if(current_evento_idx == -1) {
+		return Plugin_Continue;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS &&
+		current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return Plugin_Continue;
+	}
+
+	if(!is_player(victim) || !is_player(attacker)) {
+		return Plugin_Continue;
+	}
+
+	if(participando[victim] || participando[attacker]) {
+		return Plugin_Handled;
+	}
+
+	return Plugin_Continue;
+}
+
+bool is_player(int entity)
+{
+	return entity > 0 && entity <= MaxClients;
 }
 
 void client_takedamage_post(int victim, int attacker, int inflictor, float damage, int damagetype)
