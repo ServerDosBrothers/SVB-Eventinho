@@ -12,6 +12,11 @@
 		"classes_blacklist" "medic"
 
 		"coroa_unusual" "111.0"
+
+		"default_config"
+		{
+			"melee" "1"
+		}
 	}
 
 	"Dispenser"
@@ -117,11 +122,14 @@
 			"0" "Os jogadores devem chegar no final do corredor sem que o STAFF O VEJA CORRENDO\nNão vale a luva de velocidade"
 		}
 
-		"respawn" "1"
-
 		"classes_whitelist" "heavy"
 
 		"coroa_unusual" "10.0"
+
+		"default_config"
+		{
+			"respawn" "1"
+		}
 	}
 
 	"Dodgeball"
@@ -168,9 +176,12 @@
 			"0" "O primeiro que terminar o percurso de parkour ganha."
 		}
 
-		"respawn" "1"
-
 		"coroa_unusual" "44.0"
+
+		"default_config"
+		{
+			"respawn" "1"
+		}
 	}
 
 	"Sniper Fight"

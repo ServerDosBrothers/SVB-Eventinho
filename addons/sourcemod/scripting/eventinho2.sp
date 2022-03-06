@@ -26,9 +26,14 @@
 #define EVENTO_NAME_MAX 64
 #define EVENTO_REWARD_NAME_MAX 64
 #define EVENTO_EXPLAIN_MAX 256
+#define EVENTO_CONFIG_NAME_MAX 32
+#define EVENTO_CONFIG_VALUE_MAX 32
 
 #define CLASS_NAME_MAX 10
 #define EVENTO_CLASSES_STR_MAX (CLASS_NAME_MAX * TF_CLASS_COUNT_ALL)
+
+#define MENU_ITEM_DISPLAY_MAX 64
+#define MENU_ITEM_INFO_MAX 64
 
 #define QUERY_STR_MAX 256
 #define CMD_STR_MAX 256
@@ -71,12 +76,51 @@ enum struct EventoInfo
 	ArrayList maps;
 	int team;
 	int min_players;
-	bool respawn;
 	ArrayList explains;
 	ArrayList cmds[2];
 	ArrayList rewards;
+	StringMap default_config;
 }
 
+enum struct EventoConfig
+{
+	bool respawn;
+	bool bhop;
+	bool melee; 
+	bool random_crits;
+	bool damage;
+
+	void Init(EventoInfo event) {
+		this.respawn = false;
+		this.bhop = false;
+		this.melee = false;
+		this.random_crits = false;
+		this.damage = true;
+
+		StringMap default_config = event.default_config;
+		char config_value[EVENTO_CONFIG_VALUE_MAX];
+
+		if(default_config.GetString("respawn", config_value, sizeof(config_value))) {
+			this.respawn = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("bhop", config_value, sizeof(config_value))) {
+			this.bhop = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("melee", config_value, sizeof(config_value))) {
+			this.melee = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("random_crits", config_value, sizeof(config_value))) {
+			this.random_crits = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("damage", config_value, sizeof(config_value))) {
+			this.damage = view_as<bool>(StringToInt(config_value));
+		}
+	}
+}
 enum struct EventoMenus
 {
 	Menu explain;
@@ -110,7 +154,9 @@ static Handle hud;
 static Handle hud_participating;
 static int current_evento_idx = -1;
 static EventoInfo current_evento;
+static EventoConfig current_config;
 static EventoState current_state = EVENTO_STATE_ENDED;
+static int selected_evento_idx[MAXPLAYERS+1];
 static int evento_secs;
 static bool participando[33];
 static bool vencedor[33];
@@ -328,6 +374,7 @@ static void unload_eventos()
 		evento_infos.GetArray(i, eventinfo, sizeof(EventoInfo));
 
 		delete eventinfo.explains;
+		delete eventinfo.default_config;
 		delete eventinfo.cmds[0];
 		delete eventinfo.cmds[1];
 		delete eventinfo.rewards;
@@ -397,7 +444,6 @@ static void load_eventos()
 				PrintToServer(EVENTO_CON_PREFIX ... " %s", eventinfo.name);
 			#endif
 
-				eventinfo.respawn = view_as<bool>(kvEventos.GetNum("respawn"));
 				eventinfo.team = kvEventos.GetNum("team");
 				eventinfo.min_players = kvEventos.GetNum("min_players");
 
@@ -595,6 +641,24 @@ static void load_eventos()
 
 				if(eventinfo.rewards.Length == 0) {
 					delete eventinfo.rewards;
+				}
+
+				eventinfo.default_config = new StringMap();
+
+				if(kvEventos.JumpToKey("default_config")) {
+					if(kvEventos.GotoFirstSubKey(false)) {
+						do {
+							char config_name[EVENTO_CONFIG_NAME_MAX];
+							kvEventos.GetSectionName(config_name, sizeof(config_name));
+
+							char config_value[EVENTO_CONFIG_VALUE_MAX];
+							kvEventos.GetString(NULL_STRING, config_value, sizeof(config_value));
+
+							eventinfo.default_config.SetString(config_name, config_value);
+						} while(kvEventos.GotoNextKey(false));
+						kvEventos.GoBack();
+					}
+					kvEventos.GoBack();
 				}
 
 				handle_str_array(kvEventos, "explains", eventinfo.explains, explain, EVENTO_EXPLAIN_MAX);
@@ -1220,7 +1284,7 @@ static void player_spawn(Event event, const char[] name, bool dontBroadcast)
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(participando[client]) {
-				if(current_evento.respawn) {
+				if(current_config.respawn) {
 					int team = GetClientTeam(client);
 					if(teleport_set & BIT_FOR_TEAM(team)) {
 						TeleportEntity(client, teleport[IDX_FOR_TEAM(team)], teleport_angles[IDX_FOR_TEAM(team)]);
@@ -1285,7 +1349,7 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 
 				morreu[client] = true;
 
-				if(!current_evento.respawn) {
+				if(!current_config.respawn) {
 					set_participando(client, false, true);
 				}
 			}
@@ -3097,6 +3161,9 @@ static int evento_menu_handler(Menu menu, MenuAction action, int param1, int par
 			case 12: {
 				players_menu(param1, idx, false);
 			}
+			case 13: {
+				configs_menu(param1);
+			}
 		}
 	} else if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
@@ -3124,6 +3191,8 @@ static void evento_menu(int client, int idx)
 	char intstr[INT_STR_MAX];
 	IntToString(idx, intstr, INT_STR_MAX);
 	menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
+
+	menu.AddItem("13", "configurações");
 
 	if(current_evento_idx == idx) {
 		menu.AddItem("5", "participantes");
@@ -3173,6 +3242,14 @@ static int eventos_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		menu.GetItem(param2, intstr, INT_STR_MAX);
 		int idx = StringToInt(intstr);
 
+		EventoInfo eventoinfo;
+		evento_infos.GetArray(idx, eventoinfo, sizeof(EventoInfo));
+
+		EventoConfig eventoconfig;
+		eventoconfig.Init(eventoinfo);
+		current_config = eventoconfig;
+
+		selected_evento_idx[param1] = idx;
 		evento_menu(param1, idx);
 	} else if(action == MenuAction_End) {
 		usando_menu = -1;
@@ -3200,6 +3277,88 @@ static void eventos_menu(int client)
 	}
 
 	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+static void configs_menu(int client)
+{
+	Menu menu = new Menu(configs_menu_handler);
+	menu.SetTitle("Configurações do Evento");
+
+	char menu_item[MENU_ITEM_DISPLAY_MAX];
+
+	format_boolean_config_item("Respawn", current_config.respawn, menu_item, sizeof(menu_item));
+	menu.AddItem("respawn", menu_item);
+
+	format_boolean_config_item("Bhop", current_config.bhop, menu_item, sizeof(menu_item));
+	menu.AddItem("bhop", menu_item);
+
+	format_boolean_config_item("Apenas melee", current_config.melee, menu_item, sizeof(menu_item));
+	menu.AddItem("melee", menu_item);
+
+	format_boolean_config_item("Random crits", current_config.random_crits, menu_item, sizeof(menu_item));
+	menu.AddItem("random_crits", menu_item);
+
+	format_boolean_config_item("Dano entre os participantes", current_config.damage, menu_item, sizeof(menu_item));
+	menu.AddItem("damage", menu_item);
+
+	menu.ExitBackButton = true;
+
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+static void format_boolean_config_item(char[] display, bool value, char[] output, int output_len)
+{
+	FormatEx(output, output_len, "%s: [%s]", display, value ? "X" : " ");
+}
+
+static int configs_menu_handler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select) {
+		char info[MENU_ITEM_INFO_MAX];
+		menu.GetItem(param2, info, sizeof(info));
+
+		handle_config_selection(param1, info);
+	} else if(action == MenuAction_Cancel) {
+		if(param2 == MenuCancel_ExitBack) {
+			evento_menu(param1, selected_evento_idx[param1]);
+		}
+	} else if(action == MenuAction_End) {
+		delete menu;
+	}
+
+	return 0;
+}
+
+static void handle_config_selection(int client, char[] selectedConfig)
+{
+	if(StrEqual(selectedConfig, "respawn")) {
+		current_config.respawn = !current_config.respawn;
+		show_config_change_message(client, "Respawn", current_config.respawn);
+	} else if(StrEqual(selectedConfig, "bhop")) {
+		current_config.bhop = !current_config.bhop;
+		show_config_change_message(client, "Bhop", current_config.bhop);
+	} else if(StrEqual(selectedConfig, "melee")) {
+		current_config.melee = !current_config.melee;
+		show_config_change_message(client, "Modo apenas melee", current_config.melee);
+	} else if(StrEqual(selectedConfig, "random_crits")) {
+		current_config.random_crits = !current_config.random_crits;
+		show_config_change_message(client, "Random crit", current_config.random_crits);
+	} else if(StrEqual(selectedConfig, "damage")) {
+		current_config.damage = !current_config.damage;
+		show_config_change_message(client, "Dano entre os participantes", current_config.damage);
+	}
+
+	configs_menu(client);
+}
+
+static void show_config_change_message(int client_who_changed_config, char[] configName, bool newValue)
+{
+	if(current_state != EVENTO_STATE_IN_PROGRESS && 
+		current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return;
+	}
+
+	CShowActivity2(client_who_changed_config, EVENTO_CHAT_PREFIX, "%s %s", configName, newValue ? "ativado" : "desativado");
 }
 
 static Action sm_mevento(int client, int args)
