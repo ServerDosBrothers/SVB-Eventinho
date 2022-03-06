@@ -108,7 +108,8 @@ static ArrayList evento_infos;
 static StringMap eventoidmap;
 static Handle hud;
 static Handle hud_participating;
-static int current_evento = -1;
+static int current_evento_idx = -1;
+static EventoInfo current_evento;
 static EventoState current_state = EVENTO_STATE_ENDED;
 static int evento_secs;
 static bool participando[33];
@@ -1214,14 +1215,11 @@ static void player_spawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
-	if(current_evento != -1) {
+	if(current_evento_idx != -1) {
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(participando[client]) {
-				EventoInfo eventoinfo;
-				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
-				if(eventoinfo.respawn) {
+				if(current_evento.respawn) {
 					int team = GetClientTeam(client);
 					if(teleport_set & BIT_FOR_TEAM(team)) {
 						TeleportEntity(client, teleport[IDX_FOR_TEAM(team)]);
@@ -1247,7 +1245,7 @@ static void player_domination(Event event, const char[] name, bool dontBroadcast
 {
 	int dominator = GetClientOfUserId(event.GetInt("dominator"));
 
-	if(current_evento != -1) {
+	if(current_evento_idx != -1) {
 		if(current_state == EVENTO_STATE_IN_COUNTDOWN_START ||
 			current_state == EVENTO_STATE_ENDED) {
 
@@ -1262,15 +1260,12 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(event.GetInt("userid"));
 
-	if(current_evento != -1) {
+	if(current_evento_idx != -1) {
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(participando[client]) {
-				EventoInfo eventoinfo;
-				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
 				if(!nukealguemorreu) {
-					if(StrEqual(eventoinfo.name, "Nuke")) {
+					if(StrEqual(current_evento.name, "Nuke")) {
 						if(achiv_nuke != Achievement_Null) {
 							achiv_nuke.Award(client);
 						}
@@ -1289,7 +1284,7 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 
 				morreu[client] = true;
 
-				if(!eventoinfo.respawn) {
+				if(!current_evento.respawn) {
 					set_participando(client, false, true);
 				}
 			}
@@ -1299,17 +1294,14 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 
 public Action TeamManager_CanChangeTeam(int entity, int team)
 {
-	if(current_evento != -1) {
+	if(current_evento_idx != -1) {
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(participando[entity]) {
-				EventoInfo eventoinfo;
-				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
-				if(eventoinfo.team > 0 && eventoinfo.team != team) {
+				if(current_evento.team > 0 && current_evento.team != team) {
 					char team_name[32];
 					if(team_to_teamname(view_as<TFTeam>(team), team_name, sizeof(team_name))) {
-						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Time %s não é permitido no evento %s", team_name, eventoinfo.name);
+						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Time %s não é permitido no evento %s", team_name, current_evento.name);
 					}
 					return Plugin_Handled;
 				}
@@ -1340,17 +1332,14 @@ static bool is_class_valid(EventoInfo eventoinfo, int class)
 
 public Action TeamManager_CanChangeClass(int entity, int class)
 {
-	if(current_evento != -1) {
+	if(current_evento_idx != -1) {
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
 			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 			if(participando[entity]) {
-				EventoInfo eventoinfo;
-				evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
-				if(!is_class_valid(eventoinfo, class)) {
+				if(!is_class_valid(current_evento, class)) {
 					char class_name[32];
 					if(class_to_classname(view_as<TFClassType>(class), class_name, sizeof(class_name))) {
-						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", class_name, eventoinfo.name);
+						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido %s no evento %s", class_name, current_evento.name);
 					}
 					return Plugin_Handled;
 				}
@@ -1398,7 +1387,7 @@ static Action sm_evento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento no momento");
 		return Plugin_Handled;
 	}
@@ -1410,26 +1399,23 @@ static Action sm_evento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	EventoInfo eventoinfo;
-	evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
-	set_participando_ex(client, !participando[client], eventoinfo);
+	set_participando_ex(client, !participando[client], current_evento);
 
 	if(participando[client]) {
-		evento_explain_menu(client, current_evento);
+		evento_explain_menu(client, current_evento_idx);
 
 		if(evento_secs == -1) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você está participando do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N está participando do evento %s. Digite !evento para participar também!", client, eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você está participando do evento %s", current_evento.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N está participando do evento %s. Digite !evento para participar também!", client, current_evento.name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você irá participar do evento %s", eventoinfo.name);
-			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s. Digite !evento para participar também!", client, eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você irá participar do evento %s", current_evento.name);
+			CPrintToChatAll(EVENTO_CHAT_PREFIX ... "%N vai participar do evento %s. Digite !evento para participar também!", client, current_evento.name);
 		}
 	} else {
 		if(evento_secs == -1) {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não está mais participando do evento %s", eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não está mais participando do evento %s", current_evento.name);
 		} else {
-			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não vai mais participar do evento %s", eventoinfo.name);
+			CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Você não vai mais participar do evento %s", current_evento.name);
 		}
 	}
 
@@ -1475,12 +1461,12 @@ void client_takedamage_post(int victim, int attacker, int inflictor, float damag
 	}
 
 	/*if(damage == 666.0) {
-		if(current_evento != -1) {
+		if(current_evento_idx != -1) {
 			if(current_state == EVENTO_STATE_IN_PROGRESS ||
 				current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 				if(participando[attacker]) {
 					EventoInfo eventoinfo;
-					evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+					evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
 
 					if(achiv_hhh != Achievement_Null) {
 						achiv_hhh.Award(attacker);
@@ -1803,10 +1789,10 @@ static Action sm_rankevento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		rank_menu(client);
 	} else {
-		display_ranking_menu(client, current_evento);
+		display_ranking_menu(client, current_evento_idx);
 	}
 
 	return Plugin_Handled;
@@ -1824,10 +1810,10 @@ static Action sm_explain(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		explain_menu(client);
 	} else {
-		evento_explain_menu(client, current_evento);
+		evento_explain_menu(client, current_evento_idx);
 	}
 
 	return Plugin_Handled;
@@ -1912,10 +1898,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 
 static void set_participando(int client, bool value, bool death = false)
 {
-	EventoInfo eventoinfo;
-	evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
-
-	set_participando_ex(client, value, eventoinfo, death);
+	set_participando_ex(client, value, current_evento, death);
 }
 
 static void end_evento_with_player(int client)
@@ -2428,7 +2411,7 @@ static void clear_evento_vars()
 	evento_secs = 0;
 	stop_countdown();
 
-	current_evento = -1;
+	current_evento_idx = -1;
 	current_state = EVENTO_STATE_ENDED;
 
 	teleport[0][0] = 0.0;
@@ -2452,7 +2435,7 @@ static void cancel_evento()
 static void end_evento()
 {
 	EventoInfo eventoinfo;
-	evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+	evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
 
 	if(eventoinfo.cmds[1] != null) {
 		char cmdstr[CMD_STR_MAX];
@@ -2470,7 +2453,7 @@ static void end_evento()
 		}
 
 		if(winned_eventos[i] != null) {
-			int idx = winned_eventos[i].FindValue(current_evento);
+			int idx = winned_eventos[i].FindValue(current_evento_idx);
 			if(idx != -1) {
 				delete_reward_ents(i);
 				winned_eventos[i].Erase(idx);
@@ -2501,9 +2484,9 @@ static void end_evento()
 			winned_eventos[i] = new ArrayList();
 		}
 
-		int idx = winned_eventos[i].FindValue(current_evento);
+		int idx = winned_eventos[i].FindValue(current_evento_idx);
 		if(idx == -1) {
-			winned_eventos[i].Push(current_evento);
+			winned_eventos[i].Push(current_evento_idx);
 
 			if(thedb != null && !IsFakeClient(i)) {
 				int accid = GetSteamAccountID(i);
@@ -2532,7 +2515,7 @@ static void end_evento()
 			}
 		}
 
-		give_rewards_ex(i, current_evento);
+		give_rewards_ex(i, current_evento_idx);
 
 		DoAchievementEffects(i);
 
@@ -2585,7 +2568,10 @@ static void end_evento()
 static void start_evento_now(int idx)
 {
 	evento_secs = -1;
-	current_evento = idx;
+	current_evento_idx = idx;
+	EventoInfo eventoinfo;
+	evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
+	current_evento = eventoinfo;
 	start_evento_queued();
 }
 
@@ -2676,7 +2662,7 @@ static void start_evento_queued()
 	current_state = EVENTO_STATE_IN_PROGRESS;
 
 	EventoInfo eventoinfo;
-	evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+	evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
 
 	if(eventoinfo.cmds[0] != null) {
 		char cmdstr[CMD_STR_MAX];
@@ -2764,7 +2750,7 @@ static bool countdown_tick()
 		return true;
 	} else {
 		EventoInfo eventoinfo;
-		evento_infos.GetArray(current_evento, eventoinfo, sizeof(EventoInfo));
+		evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
 
 		char timestr[TIME_STR_MAX];
 		format_seconds(evento_secs, timestr);
@@ -2845,7 +2831,10 @@ static void queue_evento_start(int idx, int secs)
 		return;
 	}
 
-	current_evento = idx;
+	current_evento_idx = idx;
+	EventoInfo eventoinfo;
+	evento_infos.GetArray(current_evento_idx, eventoinfo, sizeof(EventoInfo));
+	current_evento = eventoinfo;
 	current_state = EVENTO_STATE_IN_COUNTDOWN_START;
 	start_countdown(secs);
 }
@@ -3109,7 +3098,7 @@ static void evento_menu(int client, int idx)
 
 	Menu menu = new Menu(evento_menu_handler);
 	menu.SetTitle(eventoinfo.name);
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		menu.ExitBackButton = true;
 	}
 
@@ -3117,7 +3106,7 @@ static void evento_menu(int client, int idx)
 	IntToString(idx, intstr, INT_STR_MAX);
 	menu.AddItem(intstr, "", ITEMDRAW_IGNORE);
 
-	if(current_evento == idx) {
+	if(current_evento_idx == idx) {
 		menu.AddItem("5", "participantes");
 		menu.AddItem("12", "nao participantes");
 		if(current_state == EVENTO_STATE_IN_PROGRESS ||
@@ -3128,7 +3117,7 @@ static void evento_menu(int client, int idx)
 
 	menu.AddItem("7", "teleport");
 
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		menu.AddItem("0", "marcar inicio");
 		menu.AddItem("10", "inicar agora");
 	} else {
@@ -3211,10 +3200,10 @@ static Action sm_mevento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		eventos_menu(client);
 	} else {
-		evento_menu(client, current_evento);
+		evento_menu(client, current_evento_idx);
 	}
 
 	return Plugin_Handled;
@@ -3255,7 +3244,7 @@ static Action sm_leventos(int client, int args)
 
 static Action sm_split(int client, int args)
 {
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento em andamento");
 		return Plugin_Handled;
 	}
@@ -3282,7 +3271,7 @@ static Action sm_split(int client, int args)
 
 static Action sm_fevento(int client, int args)
 {
-	if(current_evento == -1) {
+	if(current_evento_idx == -1) {
 		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não há nenhum evento em andamento");
 		return Plugin_Handled;
 	}
