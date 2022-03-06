@@ -118,6 +118,7 @@ static int usando_menu = -1;
 static Handle countdown_handle;
 static ChatListenInfo chat_listen;
 static float teleport[2][3];
+static float teleport_angles[2][3];
 static int teleport_set;
 static Handle dummy_item_view;
 static Database thedb;
@@ -1222,7 +1223,7 @@ static void player_spawn(Event event, const char[] name, bool dontBroadcast)
 				if(current_evento.respawn) {
 					int team = GetClientTeam(client);
 					if(teleport_set & BIT_FOR_TEAM(team)) {
-						TeleportEntity(client, teleport[IDX_FOR_TEAM(team)]);
+						TeleportEntity(client, teleport[IDX_FOR_TEAM(team)], teleport_angles[IDX_FOR_TEAM(team)]);
 					}
 				}
 			}
@@ -2594,7 +2595,7 @@ bool teleport_player_to_event(int client) {
 
 	int team = GetClientTeam(client);
 	if(teleport_set & BIT_FOR_TEAM(team)) {
-		TeleportEntity(client, teleport[IDX_FOR_TEAM(team)]);
+		TeleportEntity(client, teleport[IDX_FOR_TEAM(team)], teleport_angles[IDX_FOR_TEAM(team)]);
 		return true;
 	}
 
@@ -2878,37 +2879,55 @@ static int teleport_menu_handler(Menu menu, MenuAction action, int param1, int p
 			case 1: {
 				float pos[3];
 				GetClientAbsOrigin(param1, pos);
+				float angles[3];
+				GetClientAbsAngles(param1, angles);
 
 				static const int team = 3;
 				teleport[IDX_FOR_TEAM(team)][0] = pos[0];
 				teleport[IDX_FOR_TEAM(team)][1] = pos[1];
 				teleport[IDX_FOR_TEAM(team)][2] = pos[2];
+				teleport_angles[IDX_FOR_TEAM(team)][0] = angles[0];
+				teleport_angles[IDX_FOR_TEAM(team)][1] = angles[1];
+				teleport_angles[IDX_FOR_TEAM(team)][2] = angles[2];
 				teleport_set |= BIT_FOR_TEAM(team);
 			}
 			case 2: {
 				float pos[3];
 				GetClientAbsOrigin(param1, pos);
+				float angles[3];
+				GetClientAbsAngles(param1, angles);
 
 				static const int team = 2;
 				teleport[IDX_FOR_TEAM(team)][0] = pos[0];
 				teleport[IDX_FOR_TEAM(team)][1] = pos[1];
 				teleport[IDX_FOR_TEAM(team)][2] = pos[2];
+				teleport_angles[IDX_FOR_TEAM(team)][0] = angles[0];
+				teleport_angles[IDX_FOR_TEAM(team)][1] = angles[1];
+				teleport_angles[IDX_FOR_TEAM(team)][2] = angles[2];
 				teleport_set |= BIT_FOR_TEAM(team);
 			}
 			case 3: {
 				float pos[3];
 				GetClientAbsOrigin(param1, pos);
+				float angles[3];
+				GetClientAbsAngles(param1, angles);
 
 				int team = 2;
 				teleport[IDX_FOR_TEAM(team)][0] = pos[0];
 				teleport[IDX_FOR_TEAM(team)][1] = pos[1];
 				teleport[IDX_FOR_TEAM(team)][2] = pos[2];
+				teleport_angles[IDX_FOR_TEAM(team)][0] = angles[0];
+				teleport_angles[IDX_FOR_TEAM(team)][1] = angles[1];
+				teleport_angles[IDX_FOR_TEAM(team)][2] = angles[2];
 				teleport_set |= BIT_FOR_TEAM(team);
 
 				team = 3;
 				teleport[IDX_FOR_TEAM(team)][0] = pos[0];
 				teleport[IDX_FOR_TEAM(team)][1] = pos[1];
 				teleport[IDX_FOR_TEAM(team)][2] = pos[2];
+				teleport_angles[IDX_FOR_TEAM(team)][0] = angles[0];
+				teleport_angles[IDX_FOR_TEAM(team)][1] = angles[1];
+				teleport_angles[IDX_FOR_TEAM(team)][2] = angles[2];
 				teleport_set |= BIT_FOR_TEAM(team);
 			}
 			case 4: {
@@ -2920,7 +2939,7 @@ static int teleport_menu_handler(Menu menu, MenuAction action, int param1, int p
 
 					int team = GetClientTeam(i);
 					if(teleport_set & BIT_FOR_TEAM(team)) {
-						TeleportEntity(i, teleport[IDX_FOR_TEAM(team)]);
+						TeleportEntity(i, teleport[IDX_FOR_TEAM(team)], teleport_angles[IDX_FOR_TEAM(team)]);
 					}
 				}
 			}
