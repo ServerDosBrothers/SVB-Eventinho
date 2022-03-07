@@ -8,6 +8,7 @@
 #include <tf2items>
 #include <achivmissions>
 #include <tf2utils>
+#include "eventinho2"
 
 #undef REQUIRE_PLUGIN
 #include <svb-godmode>
@@ -132,14 +133,6 @@ enum struct EventoMenus
 enum EventoPrefabs
 {
 	PREFAB_COROA
-}
-
-enum EventoState
-{
-	EVENTO_STATE_ENDED,
-	EVENTO_STATE_IN_COUNTDOWN_START,
-	EVENTO_STATE_IN_COUNTDOWN_END,
-	EVENTO_STATE_IN_PROGRESS
 }
 
 enum struct ChatListenInfo
@@ -1155,6 +1148,15 @@ public void OnMapStart()
 
 	PrecacheModel("materials/sprites/minimap_icons/voiceicon.vmt");
 	PrecacheModel("materials/sprites/obj_icons/icon_obj_e.vmt");
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	RegPluginLibrary("eventinho2");
+	CreateNative("Eventinho_GetCurrentState", native_get_current_state);
+	CreateNative("Eventinho_IsParticipating", native_is_participating);
+	CreateNative("Eventinho_IsBhopEnabled", native_is_bhop_enabled);
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
@@ -3618,4 +3620,34 @@ static Action sm_fevento(int client, int args)
 	}
 
 	return Plugin_Handled;
+}
+
+int native_get_current_state(Handle plugin, int params)
+{
+	return view_as<int>(current_state);
+}
+
+int native_is_participating(Handle plugin, int params)
+{
+	int client = GetNativeCell(1);
+
+	if(client < 1 || client > MaxClients) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Invalid client index [%d]", client);
+	}
+
+	if(!IsClientInGame(client)) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Client not ingame [%d]", client);
+	}
+
+	return view_as<int>(participando[client]);
+}
+
+int native_is_bhop_enabled(Handle plugin, int params)
+{
+	if(current_state != EVENTO_STATE_IN_PROGRESS &&
+		current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return ThrowNativeError(SP_ERROR_NATIVE, "Event not in progress");
+	}
+
+	return view_as<int>(current_config.bhop);
 }
