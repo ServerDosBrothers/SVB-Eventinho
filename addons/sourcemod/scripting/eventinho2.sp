@@ -1,5 +1,6 @@
 #include <sourcemod>
 #include <keyvalues>
+#include <clientprefs>
 #include <tf2>
 #include <tf2_stocks>
 #include <morecolors>
@@ -152,8 +153,8 @@ static EventoConfig current_config;
 static EventoState current_state = EVENTO_STATE_ENDED;
 static int selected_evento_idx[MAXPLAYERS+1];
 static int evento_secs;
-static bool participando[33];
-static bool vencedor[33];
+static bool participando[MAXPLAYERS+1];
+static bool vencedor[MAXPLAYERS+1];
 static int usando_menu = -1;
 static Handle countdown_handle;
 static ChatListenInfo chat_listen;
@@ -191,6 +192,7 @@ static Achievement achiv_nezay = Achievement_Null;
 static Achievement achiv_bind = Achievement_Null;
 static Achievement achiv_domin = Achievement_Null;
 static Achievement achiv_color = Achievement_Null;
+static Handle reward_preference_cookie = null;
 
 public void OnAchievementsLoaded()
 {
@@ -827,6 +829,8 @@ static void give_rewards_ex(int client, int idx)
 
 static void give_rewards(int client)
 {
+	delete_reward_ents(client);
+
 	if(winned_eventos[client] == null) {
 		return;
 	}
@@ -839,7 +843,39 @@ static void give_rewards(int client)
 	int idx = GetRandomInt(0, len-1);
 	idx = winned_eventos[client].Get(idx);
 
+	if(AreClientCookiesCached(client)) {
+		char cookie_value[EVENTO_NAME_MAX];
+		GetClientCookie(client, reward_preference_cookie, cookie_value, sizeof(cookie_value));
+
+		if(StrEqual(cookie_value, "none")) {
+			return;
+		}
+
+		if(cookie_value[0] != '\0' && !StrEqual(cookie_value, "random")) {
+			int desired_evento_idx = get_evento_idx_by_name(cookie_value);
+			if(desired_evento_idx != -1) {
+				bool winned_desired_evento = winned_eventos[client].FindValue(desired_evento_idx) != -1;
+				if(winned_desired_evento) {
+					idx = desired_evento_idx;
+				}
+			}
+		}
+	}
+
 	give_rewards_ex(client, idx);
+}
+
+static int get_evento_idx_by_name(const char[] name)
+{
+	for(int i = 0; i < evento_infos.Length; i++) {
+		EventoInfo eventoinfo;
+		evento_infos.GetArray(i, eventoinfo, sizeof(EventoInfo));
+		if(StrEqual(eventoinfo.name, name)) {
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 static void query_rewards(int client)
@@ -1167,6 +1203,8 @@ public void OnPluginStart()
 		Database.Connect(db_connect, "eventinho2");
 	}
 
+	reward_preference_cookie = RegClientCookie("eventinho2_reward_preference", "Eventinho reward preference", CookieAccess_Private);
+
 	dummy_item_view = TF2Items_CreateItem(OVERRIDE_ALL|PRESERVE_ATTRIBUTES|FORCE_GENERATION);
 	TF2Items_SetClassname(dummy_item_view, "tf_wearable");
 	TF2Items_SetQuality(dummy_item_view, 0);
@@ -1175,8 +1213,8 @@ public void OnPluginStart()
 	RegConsoleCmd("sm_explain", sm_explain);
 	RegConsoleCmd("sm_evento", sm_evento);
 	RegConsoleCmd("sm_rankevento", sm_rankevento);
-	//RegConsoleCmd("sm_coroas", sm_coroas);
-	//RegConsoleCmd("ms_coroa", sm_coroas);
+	RegConsoleCmd("sm_coroas", sm_coroas);
+	RegConsoleCmd("sm_coroa", sm_coroas);
 
 	RegAdminCmd("sm_leventos", sm_leventos, ADMFLAG_ROOT);
 	RegAdminCmd("sm_reventos", sm_reventos, ADMFLAG_ROOT);
@@ -1970,6 +2008,70 @@ static Action sm_explain(int client, int args)
 	}
 
 	return Plugin_Handled;
+}
+
+static Action sm_coroas(int client, int args)
+{
+	if(!AreClientCookiesCached(client) || winned_eventos[client] == null) {
+		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Seus dados ainda não foram carregadas, tente novamente mais tarde");
+		return Plugin_Handled;
+	}
+
+	display_coroas_menu(client);
+	return Plugin_Handled;
+}
+
+void display_coroas_menu(int client)
+{
+	Menu menu = new Menu(coroas_menu_handler);
+	menu.SetTitle("Coroas de evento");
+
+	char cookie_value[EVENTO_NAME_MAX];
+	GetClientCookie(client, reward_preference_cookie, cookie_value, sizeof(cookie_value));
+
+	int item_style = ITEMDRAW_DEFAULT;
+	if(StrEqual(cookie_value, "none")) {
+		item_style = ITEMDRAW_DISABLED;
+	}
+	menu.AddItem("none", "Remover", item_style);
+
+	item_style = ITEMDRAW_DEFAULT;
+	if(cookie_value[0] == '\0' || StrEqual(cookie_value, "random")) {
+		item_style = ITEMDRAW_DISABLED;
+	}
+	menu.AddItem("random", "Aleatória", item_style);
+
+	int len = winned_eventos[client].Length;
+
+	for(int i = 0; i < len; i++) {
+		int evento_idx = winned_eventos[client].Get(i);
+		EventoInfo eventoinfo;
+		evento_infos.GetArray(evento_idx, eventoinfo, sizeof(eventoinfo));
+
+		item_style = ITEMDRAW_DEFAULT;
+		if(StrEqual(cookie_value, eventoinfo.name)) {
+			item_style = ITEMDRAW_DISABLED;
+		}
+
+		menu.AddItem(eventoinfo.name, eventoinfo.name, item_style);
+	}
+
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
+static int coroas_menu_handler(Menu menu, MenuAction action, int param1, int param2)
+{
+	if(action == MenuAction_Select) {
+		char info[EVENTO_NAME_MAX];
+		menu.GetItem(param2, info, sizeof(info));
+		SetClientCookie(param1, reward_preference_cookie, info);
+		give_rewards(param1);
+		display_coroas_menu(param1);
+	} else if(action == MenuAction_End) {
+		delete menu;
+	}
+
+	return 0;
 }
 
 static void set_participando_ex(int client, bool value, EventoInfo info, bool death = false)
