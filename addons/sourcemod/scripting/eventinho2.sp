@@ -1541,6 +1541,7 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_PostThinkPost, client_post_think_post);
 	SDKHook(client, SDKHook_OnTakeDamage, client_takedamage);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, client_takedamage_post);
+	SDKHook(client, SDKHook_WeaponSwitch, client_weapon_switch);
 }
 
 Action client_takedamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int custom)
@@ -1591,6 +1592,36 @@ void client_takedamage_post(int victim, int attacker, int inflictor, float damag
 			}
 		}
 	}*/
+}
+
+Action client_weapon_switch(int client, int weapon)
+{
+	if(!IsValidEntity(weapon)) {
+		return Plugin_Continue;
+	}
+
+	if(current_evento_idx == -1) {
+		return Plugin_Continue;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return Plugin_Continue;
+	}
+
+	if(!participando[client]) {
+		return Plugin_Continue;
+	}
+
+	if(!current_config.melee) {
+		return Plugin_Continue;
+	}
+
+	int new_weapon_slot = TF2Util_GetWeaponSlot(weapon);
+	if(new_weapon_slot != TFWeaponSlot_Melee) {
+		return Plugin_Handled;
+	}
+
+	return Plugin_Continue;
 }
 
 static bool handle_time(int &secs, int num, char timestr[TIME_STR_MAX], const char[] singular, const char[] plural)
@@ -2010,6 +2041,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 	}
 
 	show_participating_hud(client);
+	handle_melee(client);
 }
 
 static void set_participando(int client, bool value, bool death = false)
@@ -2749,6 +2781,41 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	CreateTimer(0.2, timer_teleport, usrid);
 }
 
+static void handle_melee_all()
+{
+	for(int i = 1; i <= MaxClients; i++) {
+		if(IsClientInGame(i)) {
+			handle_melee(i);
+		}
+	}
+}
+
+static void handle_melee(int client)
+{
+	if(current_evento_idx == -1) {
+		return;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return;
+	}
+
+	if(!participando[client]) {
+		return;
+	}
+
+	if(!current_config.melee) {
+		return;
+	}
+
+	int melee_weapon = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+	if(!IsValidEntity(melee_weapon)) {
+		return;
+	}
+
+	SetEntPropEnt(client, Prop_Data, "m_hActiveWeapon", melee_weapon);
+}
+
 static Action timer_podesematar(Handle timer, any data)
 {
 	podesematar = false;
@@ -2801,6 +2868,7 @@ static void start_evento_queued()
 		}
 
 		handle_player(i, eventoinfo);
+		handle_melee(i);
 	}
 
 	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento inciado");
@@ -3391,6 +3459,7 @@ static void handle_config_selection(int client, char[] selectedConfig)
 	} else if(StrEqual(selectedConfig, "melee")) {
 		current_config.melee = !current_config.melee;
 		show_config_change_message(client, "Modo apenas melee", current_config.melee);
+		handle_melee_all();
 	} else if(StrEqual(selectedConfig, "random_crits")) {
 		current_config.random_crits = !current_config.random_crits;
 		show_config_change_message(client, "Random crit", current_config.random_crits);
