@@ -1559,6 +1559,10 @@ Action client_takedamage(int victim, int& attacker, int& inflictor, float& damag
 		return Plugin_Continue;
 	}
 
+	if(current_config.damage) {
+		return Plugin_Continue;
+	}
+
 	if(participando[victim] || participando[attacker]) {
 		return Plugin_Handled;
 	}
