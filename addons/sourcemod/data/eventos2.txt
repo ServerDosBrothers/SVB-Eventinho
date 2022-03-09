@@ -79,6 +79,11 @@
 		"classes_whitelist" "heavy"
 
 		"coroa_unusual" "11.0"
+
+		"default_config"
+		{
+			"melee" "1"
+		}
 	}
 
 	"Piscina Mortal"
