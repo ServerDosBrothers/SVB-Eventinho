@@ -38,6 +38,8 @@
 #define MENU_ITEM_DISPLAY_MAX 64
 #define MENU_ITEM_INFO_MAX 64
 
+#define ENTITY_CLASSNAME_MAX 64
+
 #define QUERY_STR_MAX 256
 #define CMD_STR_MAX 256
 #define INT_STR_MAX 10
@@ -2919,6 +2921,16 @@ static void handle_melee(int client)
 	int melee_weapon = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 	if(!IsValidEntity(melee_weapon)) {
 		return;
+	}
+
+	int active_weapon = GetEntPropEnt(client, Prop_Data, "m_hActiveWeapon");
+	if(IsValidEntity(active_weapon)) {
+		char active_weapon_classname[ENTITY_CLASSNAME_MAX];
+		GetEntityClassname(active_weapon, active_weapon_classname, sizeof(active_weapon_classname));
+		if(StrEqual(active_weapon_classname, "tf_weapon_minigun")) {
+			SetEntProp(active_weapon, Prop_Send, "m_iWeaponState", 0);
+			TF2_RemoveCondition(client, TFCond_Slowed);
+		}
 	}
 
 	SetEntPropEnt(client, Prop_Data, "m_hActiveWeapon", melee_weapon);
