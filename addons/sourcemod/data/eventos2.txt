@@ -158,6 +158,11 @@
 		"classes_whitelist" "pyro"
 
 		"coroa_unusual" "88.0"
+
+		"default_config"
+		{
+			"infinite_ammo" "1"
+		}
 	}
 
 	"Pega-Pega"
@@ -214,6 +219,11 @@
 		"classes_whitelist" "sniper"
 
 		"coroa_unusual" "83.0"
+
+		"default_config"
+		{
+			"infinite_ammo" "1"
+		}
 	}
 
 	"Color Wars"

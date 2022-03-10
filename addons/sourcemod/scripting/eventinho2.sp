@@ -14,6 +14,7 @@
 #undef REQUIRE_PLUGIN
 #include <svb-godmode>
 #include <svb-randomcrits>
+#include <tf2-weapons-api>
 
 //#define DEBUG
 
@@ -94,6 +95,8 @@ enum struct EventoConfig
 	bool melee; 
 	bool random_crits;
 	bool damage;
+	bool infinite_ammo;
+	bool infinite_metal;
 
 	void Init(EventoInfo event) {
 		this.respawn = false;
@@ -123,6 +126,14 @@ enum struct EventoConfig
 
 		if(default_config.GetString("damage", config_value, sizeof(config_value))) {
 			this.damage = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("infinite_ammo", config_value, sizeof(config_value))) {
+			this.infinite_ammo = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("infinite_metal", config_value, sizeof(config_value))) {
+			this.infinite_metal = view_as<bool>(StringToInt(config_value));
 		}
 	}
 }
@@ -1439,6 +1450,35 @@ public Action SVB_OnRandomCrit(int client, int weapon)
 	}
 
 	return Plugin_Stop;
+}
+
+public Action TF2WeaponsAPI_OnPlayerRemoveAmmo(int client, int& count, TFAmmoType& ammoType)
+{
+	if(current_evento_idx == -1) {
+		return Plugin_Continue;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return Plugin_Continue;
+	}
+
+	if(!participando[client]) {
+		return Plugin_Continue;
+	}
+
+	if(ammoType == TF_AMMO_METAL) {
+		if(current_config.infinite_metal) {
+			return Plugin_Stop;
+		} else {
+			return Plugin_Continue;
+		}
+	}
+
+	if(current_config.infinite_ammo) {
+		return Plugin_Stop;
+	}
+
+	return Plugin_Continue;
 }
 
 static bool is_class_valid(EventoInfo eventoinfo, int class)
@@ -3540,6 +3580,12 @@ static void configs_menu(int client)
 	format_boolean_config_item("Dano entre os participantes", current_config.damage, menu_item, sizeof(menu_item));
 	menu.AddItem("damage", menu_item);
 
+	format_boolean_config_item("Munição infinita", current_config.infinite_ammo, menu_item, sizeof(menu_item));
+	menu.AddItem("infinite_ammo", menu_item);
+
+	format_boolean_config_item("Metal infinito", current_config.infinite_metal, menu_item, sizeof(menu_item));
+	menu.AddItem("infinite_metal", menu_item);
+
 	menu.ExitBackButton = true;
 
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -3586,6 +3632,12 @@ static void handle_config_selection(int client, char[] selectedConfig)
 	} else if(StrEqual(selectedConfig, "damage")) {
 		current_config.damage = !current_config.damage;
 		show_config_change_message(client, "Dano entre os participantes", current_config.damage);
+	} else if(StrEqual(selectedConfig, "infinite_ammo")) {
+		current_config.infinite_ammo= !current_config.infinite_ammo;
+		show_config_change_message(client, "Munição infinita", current_config.infinite_ammo);
+	} else if(StrEqual(selectedConfig, "infinite_metal")) {
+		current_config.infinite_metal = !current_config.infinite_metal;
+		show_config_change_message(client, "Metal infinito", current_config.infinite_metal);
 	}
 
 	configs_menu(client);
