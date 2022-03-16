@@ -2256,12 +2256,13 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 	}
 
 	bool tava_participando = participando[client];
+	bool is_event_in_progress = current_state == EVENTO_STATE_IN_PROGRESS ||
+		current_state == EVENTO_STATE_IN_COUNTDOWN_END;
 
 	participando[client] = value;
 
 	if(!death) {
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
+		if(is_event_in_progress) {
 			if(value) {
 				handle_player(client, info);
 
@@ -2293,7 +2294,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 		}
 	}
 
-	if(!value && tava_participando) {
+	if(!value && tava_participando && is_event_in_progress) {
 		// move the player to the team that has less players
 		int blue_count = 0;
 		int red_count = 0;
