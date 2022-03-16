@@ -1612,9 +1612,8 @@ static Action sm_evento(int client, int args)
 		return Plugin_Handled;
 	}
 
-	if((current_state == EVENTO_STATE_IN_PROGRESS ||
-		current_state == EVENTO_STATE_IN_COUNTDOWN_END) &&
-		evento_secs != -1) {
+	if(current_state == EVENTO_STATE_IN_PROGRESS ||
+		current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
 		CReplyToCommand(client, EVENTO_CHAT_PREFIX ... "Não é possivel participar de um evento em progresso");
 		return Plugin_Handled;
 	}
