@@ -1914,6 +1914,10 @@ public void OnPluginEnd()
 
 		delete_reward_ents(i);
 	}
+	
+	if(current_state != EVENTO_STATE_ENDED) {
+		cancel_evento();
+	}
 }
 
 public void OnClientDisconnect(int client)
