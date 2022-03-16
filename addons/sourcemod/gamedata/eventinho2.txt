@@ -1,0 +1,40 @@
+"Games"
+{
+    "tf"
+    {
+        "Offsets"
+        {
+            "CTFPlayer::WantsLagCompensationOnEntity"
+            {
+                "library"   "server"
+                "windows"   "331"
+                "linux"     "332"
+            }
+        }
+        "Functions"
+        {
+            "CTFPlayer::WantsLagCompensationOnEntity"
+            {
+                "offset"        "CTFPlayer::WantsLagCompensationOnEntity"
+                "callconv"      "thiscall"
+                "return"        "bool"
+                "this"          "entity"
+                "arguments"
+                {
+                    "player"
+                    {
+                        "type"      "cbaseentity"
+                    }
+                    "cmd"
+                    {
+                        "type"      "objectptr"
+                    }
+                    "entitytransmitbits"
+                    {
+                        "type"      "objectptr"
+                    }
+                }
+            }
+        }
+    }
+}

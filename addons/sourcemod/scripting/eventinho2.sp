@@ -3,6 +3,7 @@
 #include <clientprefs>
 #include <tf2>
 #include <tf2_stocks>
+#include <dhooks>
 #include <morecolors>
 #include <teammanager>
 #include <sdkhooks>
@@ -22,6 +23,10 @@
 #define MAX_ATTRIBUTES_PER_ITEM 15
 //game/shared/tf/tf_shareddefs.h
 #define TF_CLASS_COUNT_ALL 10
+
+#define COLLISION_GROUP_PLAYER_MOVEMENT 8
+#define CONTENTS_REDTEAM CONTENTS_TEAM1
+#define CONTENTS_BLUETEAM CONTENTS_TEAM2
 
 #define EF_BONEMERGE 0x001
 #define EF_BONEMERGE_FASTCULL 0x080
@@ -97,6 +102,7 @@ enum struct EventoConfig
 	bool damage;
 	bool infinite_ammo;
 	bool infinite_metal;
+	bool friendly_fire;
 
 	void Init(EventoInfo event) {
 		this.respawn = false;
@@ -135,6 +141,10 @@ enum struct EventoConfig
 		if(default_config.GetString("infinite_metal", config_value, sizeof(config_value))) {
 			this.infinite_metal = view_as<bool>(StringToInt(config_value));
 		}
+
+		if(default_config.GetString("friendly_fire", config_value, sizeof(config_value))) {
+			this.friendly_fire = view_as<bool>(StringToInt(config_value));
+		}
 	}
 }
 enum struct EventoMenus
@@ -155,6 +165,11 @@ enum struct ChatListenInfo
 	bool start;
 	int idx;
 }
+
+static ConVar mp_friendlyfire;
+static ConVar tf_avoidteammates;
+DynamicHook wants_lag_compensation = null;
+int wants_lag_compensation_hook_id[MAXPLAYERS + 1] = { INVALID_HOOK_ID, ... };
 
 static ArrayList evento_infos;
 static StringMap eventoidmap;
@@ -1261,6 +1276,20 @@ public void OnPluginStart()
 	}
 
 	OnAchievementsLoaded();
+
+	mp_friendlyfire = FindConVar("mp_friendlyfire");
+	tf_avoidteammates = FindConVar("tf_avoidteammates");
+
+	GameData gamedata = new GameData("eventinho2");
+	if(gamedata == null) {
+		SetFailState("Gamedata file not found");
+		return;
+	}
+
+	wants_lag_compensation= DynamicHook.FromConf(gamedata, "CTFPlayer::WantsLagCompensationOnEntity");
+	if(wants_lag_compensation == null) {
+		SetFailState("Failed to setup hook for CTFPlayer::WantsLagCompensationOnEntity");
+	}
 }
 
 public void OnAllPluginsLoaded()
@@ -1428,6 +1457,27 @@ public Action TeamManager_CanChangeTeam(int entity, int team)
 		}
 	}
 	return Plugin_Continue;
+}
+
+public Action TeamManager_CanDamage(int entity, int other)
+{
+	if(!is_player(entity) || !is_player(other)) {
+		return Plugin_Continue;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return Plugin_Continue;
+	}
+
+	if(!participando[entity]) {
+		return Plugin_Continue;
+	}
+
+	if(!current_config.friendly_fire) {
+		return Plugin_Continue;
+	}
+
+	return Plugin_Changed;
 }
 
 public Action SVB_OnRandomCrit(int client, int weapon)
@@ -1657,6 +1707,23 @@ bool is_player(int entity)
 	return entity > 0 && entity <= MaxClients;
 }
 
+bool is_participating_in_in_progress_event(int client)
+{
+	if(current_evento_idx == -1) {
+		return false;
+	}
+
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return false;
+	}
+
+	if(!participando[client]) {
+		return false;
+	}
+
+	return true;
+}
+
 void client_takedamage_post(int victim, int attacker, int inflictor, float damage, int damagetype)
 {
 	if(attacker < 1 || attacker > MaxClients) {
@@ -1708,6 +1775,62 @@ Action client_weapon_switch(int client, int weapon)
 	}
 
 	return Plugin_Continue;
+}
+
+bool client_should_collide(int entity, int collisiongroup, int contentmask, bool originalresult) {
+	if(!is_player(entity)) {
+		return originalresult;
+	}
+
+	if(!is_participating_in_in_progress_event(entity)) {
+		return originalresult;
+	}
+
+	if(!current_config.friendly_fire) {
+		return originalresult;
+	}
+
+	if(collisiongroup != COLLISION_GROUP_PLAYER_MOVEMENT) {
+		return originalresult;
+	}
+
+	switch(TF2_GetClientTeam(entity)) {
+		case TFTeam_Red: {
+			if(!(contentmask & CONTENTS_REDTEAM)) {
+				return true;
+			}
+		}
+		case TFTeam_Blue: {
+			if(!(contentmask & CONTENTS_BLUETEAM)) {
+				return true;
+			}
+		}
+	}
+	
+	return originalresult;
+}
+
+MRESReturn dhook_wants_lag_compensation_on_entity(int pThis, DHookReturn hReturn, DHookParam hParams)
+{
+	if(!is_participating_in_in_progress_event(pThis)) {
+		return MRES_Ignored;
+	}
+
+	if(!current_config.friendly_fire) {
+		return MRES_Ignored;
+	}
+
+	int other_player = hParams.Get(1);
+	if(!is_participating_in_in_progress_event(other_player)) {
+		return MRES_Ignored;
+	}
+
+	if(TF2_GetClientTeam(pThis) != TF2_GetClientTeam(other_player)) {
+		return MRES_Ignored;
+	}
+
+	hReturn.Value = true;
+	return MRES_Supercede;
 }
 
 static bool handle_time(int &secs, int num, char timestr[TIME_STR_MAX], const char[] singular, const char[] plural)
@@ -1815,6 +1938,7 @@ public void OnClientDisconnect(int client)
 
 	morreu[client] = false;
 	semato[client] = false;
+	wants_lag_compensation_hook_id[client] = INVALID_HOOK_ID;
 }
 
 static int classes_menu_handler(Menu menu, MenuAction action, int param1, int param2)
@@ -2192,6 +2316,7 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 
 	show_participating_hud(client);
 	handle_melee(client);
+	handle_friendlyfire(client);
 }
 
 static void set_participando(int client, bool value, bool death = false)
@@ -2976,6 +3101,52 @@ static void handle_melee(int client)
 	SetEntPropEnt(client, Prop_Data, "m_hActiveWeapon", melee_weapon);
 }
 
+static void handle_friendlyfire_all()
+{
+	for(int i = 1; i <= MaxClients; i++) {
+		if(IsClientInGame(i)) {
+			handle_friendlyfire(i);
+		}
+	}
+}
+
+static void handle_friendlyfire(int client)
+{
+	if(is_participating_in_in_progress_event(client) &&
+		current_config.friendly_fire) {
+		enable_friendlyfire(client);	
+	} else {
+		disable_friendlyfire(client);
+	}
+}
+
+static void enable_friendlyfire(int client)
+{
+	SDKHook(client, SDKHook_ShouldCollide, client_should_collide);
+	wants_lag_compensation_hook_id[client] = wants_lag_compensation.HookEntity(Hook_Pre, client, dhook_wants_lag_compensation_on_entity);
+	if(!IsFakeClient(client)) {
+		mp_friendlyfire.ReplicateToClient(client, "1");
+		tf_avoidteammates.ReplicateToClient(client, "0");
+	}
+}
+
+static void disable_friendlyfire(int client)
+{
+	SDKUnhook(client, SDKHook_ShouldCollide, client_should_collide);
+	if(wants_lag_compensation_hook_id[client] != INVALID_HOOK_ID) {
+		DynamicHook.RemoveHook(wants_lag_compensation_hook_id[client]);
+		wants_lag_compensation_hook_id[client] = INVALID_HOOK_ID;
+	}
+
+	if(!IsFakeClient(client)) {
+		char cvar_value[8];
+		mp_friendlyfire.GetString(cvar_value, sizeof(cvar_value));
+		mp_friendlyfire.ReplicateToClient(client, cvar_value);
+		tf_avoidteammates.GetString(cvar_value, sizeof(cvar_value));
+		tf_avoidteammates.ReplicateToClient(client, cvar_value);
+	}
+}
+
 static Action timer_podesematar(Handle timer, any data)
 {
 	podesematar = false;
@@ -3029,6 +3200,7 @@ static void start_evento_queued()
 
 		handle_player(i, eventoinfo);
 		handle_melee(i);
+		handle_friendlyfire(i);
 	}
 
 	CPrintToChatAll(EVENTO_CHAT_PREFIX ... "Evento inciado");
@@ -3586,6 +3758,9 @@ static void configs_menu(int client)
 	format_boolean_config_item("Metal infinito", current_config.infinite_metal, menu_item, sizeof(menu_item));
 	menu.AddItem("infinite_metal", menu_item);
 
+	format_boolean_config_item("Friendly fire", current_config.friendly_fire, menu_item, sizeof(menu_item));
+	menu.AddItem("friendly_fire", menu_item);
+
 	menu.ExitBackButton = true;
 
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -3638,6 +3813,10 @@ static void handle_config_selection(int client, char[] selectedConfig)
 	} else if(StrEqual(selectedConfig, "infinite_metal")) {
 		current_config.infinite_metal = !current_config.infinite_metal;
 		show_config_change_message(client, "Metal infinito", current_config.infinite_metal);
+	} else if(StrEqual(selectedConfig, "friendly_fire")) {
+		current_config.friendly_fire = !current_config.friendly_fire;
+		show_config_change_message(client, "Friendly fire", current_config.friendly_fire);
+		handle_friendlyfire_all();
 	}
 
 	configs_menu(client);
