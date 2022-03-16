@@ -3734,7 +3734,7 @@ static void eventos_menu(int client)
 	menu.Display(client, MENU_TIME_FOREVER);
 }
 
-static void configs_menu(int client)
+static void configs_menu(int client, int first_item = 0)
 {
 	Menu menu = new Menu(configs_menu_handler);
 	menu.SetTitle("Configurações do Evento");
@@ -3767,7 +3767,7 @@ static void configs_menu(int client)
 
 	menu.ExitBackButton = true;
 
-	menu.Display(client, MENU_TIME_FOREVER);
+	menu.DisplayAt(client, first_item, MENU_TIME_FOREVER);
 }
 
 static void format_boolean_config_item(char[] display, bool value, char[] output, int output_len)
@@ -3782,6 +3782,8 @@ static int configs_menu_handler(Menu menu, MenuAction action, int param1, int pa
 		menu.GetItem(param2, info, sizeof(info));
 
 		handle_config_selection(param1, info);
+
+		configs_menu(param1, menu.Selection);
 	} else if(action == MenuAction_Cancel) {
 		if(param2 == MenuCancel_ExitBack) {
 			evento_menu(param1, selected_evento_idx[param1]);
@@ -3822,8 +3824,6 @@ static void handle_config_selection(int client, char[] selectedConfig)
 		show_config_change_message(client, "Friendly fire", current_config.friendly_fire);
 		handle_friendlyfire_all();
 	}
-
-	configs_menu(client);
 }
 
 static void show_config_change_message(int client_who_changed_config, char[] configName, bool newValue)
