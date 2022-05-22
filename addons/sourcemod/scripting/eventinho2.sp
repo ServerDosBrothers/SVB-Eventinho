@@ -2367,8 +2367,10 @@ static int player_menu_handler(Menu menu, MenuAction action, int param1, int par
 				end_evento_with_player(player);
 				return 0;
 			}
-			case 3:
-			{ set_participando(player, true); }
+			case 3: {
+				set_player_event_team_if_needed(player);
+				set_participando(player, true); 
+			}
 		}
 
 		players_menu(param1, idx, true);
@@ -3147,6 +3149,45 @@ static void disable_friendlyfire(int client)
 		mp_friendlyfire.ReplicateToClient(client, cvar_value);
 		tf_avoidteammates.GetString(cvar_value, sizeof(cvar_value));
 		tf_avoidteammates.ReplicateToClient(client, cvar_value);
+	}
+}
+
+static void set_player_event_team_if_needed(int client) {
+	if(current_evento_idx == -1) {
+		return;
+	}
+	
+	if(current_state != EVENTO_STATE_IN_PROGRESS && current_state != EVENTO_STATE_IN_COUNTDOWN_END) {
+		return;
+	}
+	
+	if(!(teleport_set & BIT_FOR_TEAM(2)) || !(teleport_set & BIT_FOR_TEAM(3))) {
+		return;
+	}
+	
+	int red_count = 0;
+	int blu_count = 0;
+	
+	for(int i = 1; i <= MaxClients; i++) {
+		if(!IsClientInGame(i)) {
+			continue;
+		}
+		
+		if(!participando[i]) {
+			continue;
+		}
+		
+		if(TF2_GetClientTeam(i) == TFTeam_Red) {
+			red_count++;
+		} else if(TF2_GetClientTeam(i) == TFTeam_Blue) {
+			blu_count++;
+		}
+	}
+	
+	if(red_count < blu_count) {
+		TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Red), false);
+	} else {
+		TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Blue), false);
 	}
 }
 
@@ -3950,6 +3991,9 @@ static Action sm_fevento(int client, int args)
 
 	for(int i = 0; i < target_count; i++) {
 		int target_client = target_list[i];
+		if(should_participate) {
+			set_player_event_team_if_needed(target_client);
+		}
 		set_participando(target_client, should_participate);
 	}
 
