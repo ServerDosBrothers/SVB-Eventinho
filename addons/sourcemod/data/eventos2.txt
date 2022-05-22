@@ -42,10 +42,10 @@
 	{
 		"explains"
 		{
-			"0" "Vocês precisam sobreviver às explosões de nuke"
-			"1" "Elas são indicadas por uma fumaça azul (primeiro aparece a fumaça e depois de alguns segundos a explosão no local)"
-			"2" "Após a explosão, a fumaça que fica causa um dano por segundo"
+			"0" "Vocês precisam sobreviver às explosões de nuke, que são indicadas por uma fumaça azul antes da explosão"
+			"1" "Após a explosão, a fumaça que fica causa um dano por segundo"
 			"2" "Bonk e Ubercarga do medico te deixa imune à nuke e ao dano da fumaça e estão liberadas para utilizar"
+			"3" "É PROIBIDO ARMA DE JUMP (Rocket Jumper e Sticky Jumper)"
 		}
 
 		"weapons_blacklist"
@@ -64,8 +64,7 @@
 			"0" "Vocês devem ficar com o kit de disfarçe na mão"
 			"1" "É PROIBIDO ficar com outra arma na mão, ficar se disfarçando ou dar taunt"
 			"2" "Quando o organizador do evento apertar um botão, todos os participantes serão forçados a dar taunt (automaticamente)"
-			"3" "Como o kit de disfarce possui dois taunts possíveis, sendo um deles o SPYCRAB, quem fizer o SPYCRAB será eliminado"
-			"4" "O vencedor será o último que sobrar"
+			"3" "Como o kit de disfarce possui dois taunts possíveis, sendo um deles o SPYCRAB, quem fizer o SPYCRAB será eliminado. Vence o último que sobrar."
 		}
 
 		"classes_whitelist" "spy"
@@ -77,7 +76,7 @@
 	{
 		"explains"
 		{
-			"0" "Torneio 1x1 entre heavies utilizando apenas melee"
+			"0" "Torneio 1x1 entre heavies utilizando apenas melee e sem críticos aleatórios"
 		}
 
 		"classes_whitelist" "heavy"
@@ -129,11 +128,10 @@
 	{
 		"explains"
 		{
-			"0" "Os participantes serão colocados em um corredor e o objetivo será chegar até o outro lado"
-			"1" "No final do corredor estará o organizador do evento (com tamanho maior e bem visível)"
-			"2" "Vocês podem andar pelo corredor SOMENTE QUANDO O ORGANIZADOR NÃO ESTIVER OLHANDO"
-			"3" "Caso o organizador veja alguém andando, ele vai matar a pessoa e ela vai voltar até o começo do corredor"
-			"4" "É PROIBIDO LUVA DE VELOCIDADE"
+			"0" "Os participantes devem chegar até o outro lado do corredor, onde estará o organizador do evento (em tamanho maior e bem visível)"
+			"1" "Vocês podem andar pelo corredor SOMENTE QUANDO O ORGANIZADOR NÃO ESTIVER OLHANDO"
+			"2" "Caso o organizador veja alguém andando, ele vai matar a pessoa e ela vai voltar até o começo do corredor"
+			"3" "É PROIBIDO LUVA DE VELOCIDADE"
 		}
 
 		"classes_whitelist" "heavy"
@@ -280,10 +278,9 @@
 		"explains"
 		{
 			"0" "Vocês terão que fugir do organizador do evento, que será um HEAVY com EFEITO DE PRAGA"
-			"1" "Caso ele encoste EM VOCÊ ou EM ALGUÉM PRÓXIMO, você vai começar a levar dano e vai morrer após alguns segundos"
+			"1" "Caso ele encoste EM VOCÊ ou EM ALGUÉM PRÓXIMO, você vai começar a levar dano e vai morrer após alguns segundos. Vence o último vivo."
 			"2" "Pegar comida jogada por outros jogadores cancela esse efeito, te permitindo sobreviver"
-			"3" "Vence o último vivo"
-			"4" "É PROIBIDO LUVA DE SPEED"
+			"3" "É PROIBIDO LUVA DE SPEED"
 		}
 
 		"classes_whitelist" "heavy"
@@ -327,7 +324,6 @@
 			"1" "Durante o evento, o chão de todas as cores, exceto uma, vai desaparecer, matando quem estiver em cima"
 			"2" "Nessa sala terá uma TELA EM BRANCO na parede"
 			"3" "Essa tela em branco vai mostrar a ÚNICA COR QUE NÃO VAI DESAPARECER (ou seja, a cor para onde vocês devem ir)"
-			"4" "Vence o último vivo"
 		}
 
 		"classes_whitelist" "spy"
@@ -414,10 +410,8 @@
 		{
 			"0" "Os jogadores serão colocados em uma sala com chão dividido entre VERDE e VERMELHO"
 			"1" "O organizador do evento vai fazer várias perguntas de verdadeiro/falso"
-			"2" "Os jogadores deverão ir para o chão correspondente à resposta correta"
-			"3" "VERDE = verdadeiro, VERMELHO = falso"
-			"4" "Quem estiver no lado incorreto vai morrer"
-			"5" "Vence o último vivo"
+			"2" "Os jogadores deverão ir para o chão correspondente à resposta correta (VERDE = verdadeiro, VERMELHO = falso)"
+			"3" "Quem estiver no lado incorreto vai morrer. Vence o último vivo"
 		}
 
 		"classes_whitelist" "spy"
