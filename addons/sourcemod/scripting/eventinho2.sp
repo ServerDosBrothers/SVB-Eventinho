@@ -1673,6 +1673,7 @@ public void OnClientPutInServer(int client)
 	SDKHook(client, SDKHook_OnTakeDamage, client_takedamage);
 	SDKHook(client, SDKHook_OnTakeDamageAlivePost, client_takedamage_post);
 	SDKHook(client, SDKHook_WeaponSwitch, client_weapon_switch);
+	SDKHook(client, SDKHook_ShouldCollide, client_should_collide);
 }
 
 Action client_takedamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int custom)
@@ -3126,7 +3127,6 @@ static void handle_friendlyfire(int client)
 
 static void enable_friendlyfire(int client)
 {
-	SDKHook(client, SDKHook_ShouldCollide, client_should_collide);
 	wants_lag_compensation_hook_id[client] = wants_lag_compensation.HookEntity(Hook_Pre, client, dhook_wants_lag_compensation_on_entity);
 	if(!IsFakeClient(client)) {
 		mp_friendlyfire.ReplicateToClient(client, "1");
@@ -3136,7 +3136,6 @@ static void enable_friendlyfire(int client)
 
 static void disable_friendlyfire(int client)
 {
-	SDKUnhook(client, SDKHook_ShouldCollide, client_should_collide);
 	if(wants_lag_compensation_hook_id[client] != INVALID_HOOK_ID) {
 		DynamicHook.RemoveHook(wants_lag_compensation_hook_id[client]);
 		wants_lag_compensation_hook_id[client] = INVALID_HOOK_ID;
