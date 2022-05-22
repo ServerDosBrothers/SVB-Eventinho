@@ -237,6 +237,11 @@
 		}
 
 		"coroa_unusual" "79.0"
+
+		"default_config"
+		{
+			"respawn" "1"
+		}
 	}
 
 	"MGE"
