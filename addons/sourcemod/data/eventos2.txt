@@ -168,8 +168,7 @@
 		"explains"
 		{
 			"0" "Jogadores serão jogados no labirinto e terão que fugir do ORGANIZADOR DO EVENTO"
-			"1" "O ORGANIZADOR pode ver pessoas invisíveis e atraves das paredes para facilitar o evento"
-			"2" "Todas as armas podem ser utilizadas, porém nenhum comando pode ser usado"
+			"1" "Todas as armas podem ser utilizadas, porém nenhum comando pode ser usado"
 		}
 
 		"coroa_unusual" "37.0"
@@ -359,7 +358,7 @@
 	{
 		"explains"
 		{
-			"0" "Jogadores ficarão invisíveis e o objetivo será evitarser morto pela staff"
+			"0" "Jogadores ficarão invisíveis e o objetivo será evitar ser morto pela staff"
 			"1" "Jogadores mortos terão que mudar de time para ajudar a staff a caçar o restante dos jogadores"
 			"2" "Vence o último vivo"
 		}
