@@ -103,6 +103,7 @@ enum struct EventoConfig
 	bool infinite_ammo;
 	bool infinite_metal;
 	bool friendly_fire;
+	bool show_sprite;
 
 	void Init(EventoInfo event) {
 		this.respawn = false;
@@ -110,6 +111,7 @@ enum struct EventoConfig
 		this.melee = false;
 		this.random_crits = false;
 		this.damage = true;
+		this.show_sprite = false;
 
 		StringMap default_config = event.default_config;
 		char config_value[EVENTO_CONFIG_VALUE_MAX];
@@ -144,6 +146,10 @@ enum struct EventoConfig
 
 		if(default_config.GetString("friendly_fire", config_value, sizeof(config_value))) {
 			this.friendly_fire = view_as<bool>(StringToInt(config_value));
+		}
+
+		if(default_config.GetString("show_sprite", config_value, sizeof(config_value))) {
+			this.show_sprite = view_as<bool>(StringToInt(config_value));
 		}
 	}
 }
@@ -2319,7 +2325,7 @@ static void set_participando(int client, bool value, bool death = false)
 
 static Action sprite_set_transmit(int entity, int client)
 {
-	if(CheckCommandAccess(client, "eventinho_ver_participantes", ADMFLAG_GENERIC)) {
+	if(current_config.show_sprite) {
 		return Plugin_Continue;
 	}
 
@@ -3801,6 +3807,9 @@ static void configs_menu(int client, int first_item = 0)
 
 	format_boolean_config_item("Friendly fire", current_config.friendly_fire, menu_item, sizeof(menu_item));
 	menu.AddItem("friendly_fire", menu_item);
+	
+	format_boolean_config_item("Ícone acima dos participantes", current_config.show_sprite, menu_item, sizeof(menu_item));
+	menu.AddItem("show_sprite", menu_item);
 
 	menu.ExitBackButton = true;
 
@@ -3860,6 +3869,9 @@ static void handle_config_selection(int client, char[] selectedConfig)
 		current_config.friendly_fire = !current_config.friendly_fire;
 		show_config_change_message(client, "Friendly fire", current_config.friendly_fire);
 		handle_friendlyfire_all();
+	} else if(StrEqual(selectedConfig, "show_sprite")) {
+		current_config.show_sprite = !current_config.show_sprite;
+		show_config_change_message(client, "Ícone acima dos participantes", current_config.show_sprite);
 	}
 }
 
