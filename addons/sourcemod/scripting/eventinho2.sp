@@ -2252,36 +2252,33 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 		current_state == EVENTO_STATE_IN_COUNTDOWN_END;
 
 	participando[client] = value;
+	
+	if(value && playersprite[client] == INVALID_ENT_REFERENCE) {
+		int entity = CreateEntityByName("env_sprite_oriented");
+		DispatchKeyValue(entity, "framerate", "10.0");
+		DispatchKeyValue(entity, "scale", "");
+		DispatchKeyValue(entity, "model", "materials/sprites/minimap_icons/voiceicon.vmt");
+		DispatchKeyValue(entity, "spawnflags", "1");
+		DispatchKeyValueFloat(entity, "GlowProxySize", 2.0);
+		DispatchKeyValueFloat(entity, "HDRColorScale", 1.0);
+		DispatchSpawn(entity);
+		ActivateEntity(entity);
+		
+		AcceptEntityInput(entity, "ShowSprite");
+		
+		SetEntityRenderColor(entity, 255, 0, 0, 255);
+		
+		SetEdictFlags(entity, GetEdictFlags(entity) ^ FL_EDICT_ALWAYS)
+		
+		SDKHook(entity, SDKHook_SetTransmit, sprite_set_transmit);
+
+		playersprite[client] = EntIndexToEntRef(entity);
+	}
 
 	if(!death) {
 		if(is_event_in_progress) {
 			if(value) {
 				handle_player(client, info);
-
-				int entity = CreateEntityByName("env_sprite_oriented");
-				DispatchKeyValue(entity, "framerate", "10.0");
-				DispatchKeyValue(entity, "scale", "");
-				DispatchKeyValue(entity, "model", "materials/sprites/minimap_icons/voiceicon.vmt");
-				//DispatchKeyValue(entity, "model", "materials/sprites/obj_icons/icon_obj_e.vmt");
-				DispatchKeyValue(entity, "spawnflags", "1");
-				DispatchKeyValueFloat(entity, "GlowProxySize", 2.0);
-				DispatchKeyValueFloat(entity, "HDRColorScale", 1.0);
-				DispatchSpawn(entity);
-				ActivateEntity(entity);
-				
-				AcceptEntityInput(entity, "ShowSprite");
-				
-				SetEntityRenderColor(entity, 255, 0, 0, 255);
-				
-				//SetVariantString("!activator");
-				//AcceptEntityInput(entity, "SetParent", client);
-				
-				//SetVariantString("head");
-				//AcceptEntityInput(entity, "SetParentAttachment");
-				
-				//SDKHook(entity, SDKHook_SetTransmit, SetTransmit);
-
-				playersprite[client] = EntIndexToEntRef(entity);
 			}
 		}
 	}
@@ -2318,6 +2315,15 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 static void set_participando(int client, bool value, bool death = false)
 {
 	set_participando_ex(client, value, current_evento, death);
+}
+
+static Action sprite_set_transmit(int entity, int client)
+{
+	if(CheckCommandAccess(client, "eventinho_ver_participantes", ADMFLAG_GENERIC)) {
+		return Plugin_Continue;
+	}
+
+	return Plugin_Handled;
 }
 
 static void end_evento_with_player(int client)
