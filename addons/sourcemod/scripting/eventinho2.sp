@@ -2305,9 +2305,9 @@ static void set_participando_ex(int client, bool value, EventoInfo info, bool de
 			}
 		}
 		if(red_count < blue_count) {
-			TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Red), false);
+			set_client_team(client, TFTeam_Red);
 		} else {
-			TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Blue), false);
+			set_client_team(client, TFTeam_Blue);
 		}
 
 		TF2_RespawnPlayer(client);
@@ -3056,7 +3056,7 @@ static void handle_player(int i, EventoInfo eventoinfo)
 	}
 
 	//ChangeClientTeam(i, team);
-	TeamManager_SetEntityTeam(i, team, false);
+	set_client_team(i, view_as<TFTeam>(team));
 
 	if(godmode_loaded) {
 		SVBGodMode_SetClientState(i, GodState_Mortal);
@@ -3188,9 +3188,25 @@ static void set_player_event_team_if_needed(int client) {
 	}
 	
 	if(red_count < blu_count) {
-		TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Red), false);
+		set_client_team(client, TFTeam_Red);
 	} else {
-		TeamManager_SetEntityTeam(client, view_as<int>(TFTeam_Blue), false);
+		set_client_team(client, TFTeam_Blue);
+	}
+}
+
+static void set_client_team(int client, TFTeam team)
+{
+	TeamManager_SetEntityTeam(client, view_as<int>(team), false);
+	set_client_wearables_team(client, team);
+}
+
+static void set_client_wearables_team(int client, TFTeam team) {
+	int wearablesCount = TF2Util_GetPlayerWearableCount(client);
+	for(int i = 0; i < wearablesCount; i++) {
+		int wearable = TF2Util_GetPlayerWearable(client, i);
+		if(IsValidEntity(wearable)) {
+			TeamManager_SetEntityTeam(wearable, view_as<int>(team), false);
+		}
 	}
 }
 
@@ -3270,7 +3286,7 @@ static void split_participants() {
 	for(int i = 0; i < participants.Length; i++) {
 		int client = participants.Get(i);
 		TFTeam new_team = i % 2 == 0 ? TFTeam_Red :TFTeam_Blue;
-		TeamManager_SetEntityTeam(client, view_as<int>(new_team), false);
+		set_client_team(client, new_team);
 	}
 
 	delete participants;
