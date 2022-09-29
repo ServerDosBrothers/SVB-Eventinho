@@ -1290,6 +1290,9 @@ public void OnPluginStart()
 	if(wants_lag_compensation == null) {
 		SetFailState("Failed to setup hook for CTFPlayer::WantsLagCompensationOnEntity");
 	}
+
+	AddCommandListener(cmd_block_for_participants, "autoteam");
+	AddCommandListener(cmd_block_for_participants, "spectate");
 }
 
 public void OnAllPluginsLoaded()
@@ -1342,6 +1345,16 @@ static bool filter_evento(const char[] filter, ArrayList clients)
 	}
 
 	return true;
+}
+
+static Action cmd_block_for_participants(int client, const char[] command, int argc)
+{
+	if(is_participating_in_in_progress_event(client)) {
+		CPrintToChat(client, EVENTO_CHAT_PREFIX ... "Não é permitido mudar de time durante eventos");
+		return Plugin_Handled;
+	}
+
+	return Plugin_Continue;
 }
 
 static void post_inventory_application_frame(int usrid)
@@ -1442,20 +1455,11 @@ static void player_death(Event event, const char[] name, bool dontBroadcast)
 
 public Action TeamManager_CanChangeTeam(int entity, int team)
 {
-	if(current_evento_idx != -1) {
-		if(current_state == EVENTO_STATE_IN_PROGRESS ||
-			current_state == EVENTO_STATE_IN_COUNTDOWN_END) {
-			if(participando[entity]) {
-				if(current_evento.team > 0 && current_evento.team != team) {
-					char team_name[32];
-					if(team_to_teamname(view_as<TFTeam>(team), team_name, sizeof(team_name))) {
-						CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Time %s não é permitido no evento %s", team_name, current_evento.name);
-					}
-					return Plugin_Handled;
-				}
-			}
-		}
+	if(is_participating_in_in_progress_event(entity)) {
+		CPrintToChat(entity, EVENTO_CHAT_PREFIX ... "Não é permitido mudar de time durante eventos");
+		return Plugin_Handled;
 	}
+
 	return Plugin_Continue;
 }
 
@@ -1567,19 +1571,6 @@ public Action TeamManager_CanChangeClass(int entity, int class)
 		}
 	}
 	return Plugin_Continue;
-}
-
-bool team_to_teamname(TFTeam team, char[] name, int length)
-{
-	switch(team)
-	{
-		case TFTeam_Red: { strcopy(name, length, "red"); return true; }
-		case TFTeam_Blue: { strcopy(name, length, "blue"); return true; }
-		case TFTeam_Spectator: { strcopy(name, length, "spectator"); return true; }
-		case TFTeam_Unassigned: { strcopy(name, length, "unassigned"); return true; }
-	}	
-	
-	return false;
 }
 
 bool class_to_classname(TFClassType type, char[] name, int length)
